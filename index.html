@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Farm Fresh Box – Weekly pre-order</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f6f0;--card:#fff;--ink:#17261c;--mut:#5a6b5f;--line:#dbe5d8;--leaf:#1f7a4d;--cta:#e8472b;--oncta:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a13;--card:#17261c;--ink:#eaf3ec;--mut:#9db3a3;--line:#27382d;--leaf:#5fd08f;--cta:#ff6b4a;--oncta:#1a0d09}}
+:root[data-theme="dark"]{--bg:#0f1a13;--card:#17261c;--ink:#eaf3ec;--mut:#9db3a3;--line:#27382d;--leaf:#5fd08f;--cta:#ff6b4a;--oncta:#1a0d09}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "DM Sans",system-ui,sans-serif;padding-bottom:210px}
+h1,h2{font-family:"Bricolage Grotesque","DM Sans",sans-serif;margin:0;line-height:1.1}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--cta);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+header{padding:22px 0 14px}
+h1{font-size:34px;font-weight:800;color:var(--leaf)}
+.sub{color:var(--mut);margin:6px 0 0}
+.banner{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:12px 0;font-size:15px}
+.banner b{color:var(--cta)}
+.note{font-size:13px;color:var(--mut);margin:0 0 12px}
+.tabs{display:flex;gap:8px;margin:14px 0;overflow-x:auto;scrollbar-width:none}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:999px;font-weight:700;white-space:nowrap}
+.tab[aria-pressed=true]{background:var(--leaf);border-color:var(--leaf);color:var(--bg)}
+.box{background:var(--leaf);color:var(--bg);border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.box h2{font-size:20px}
+.box p{margin:4px 0 0;font-size:14px;opacity:.9}
+.box button{background:var(--bg);color:var(--leaf);border:0;border-radius:999px;padding:10px 16px;font-weight:700;white-space:nowrap}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.em{font-size:30px;width:48px;height:48px;border-radius:12px;background:var(--bg);display:grid;place-items:center;flex:none}
+.nm{flex:1;min-width:0}
+.nm b{display:block}
+.nm span{color:var(--mut);font-size:14px}
+.add{border:2px solid var(--leaf);background:transparent;color:var(--leaf);border-radius:999px;padding:7px 18px;font-weight:700}
+.step{display:flex;align-items:center;gap:4px;background:var(--leaf);color:var(--bg);border-radius:999px}
+.step button{width:36px;height:36px;border:0;background:transparent;color:inherit;font-size:20px;font-weight:700}
+.step span{min-width:22px;text-align:center;font-weight:700}
+.bar .in{max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.bar b{font-size:18px}
+.cta{background:var(--cta);color:var(--oncta);border:0;border-radius:999px;padding:13px 22px;font-weight:700}
+.cta[disabled]{opacity:.45;cursor:not-allowed}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10;display:flex;align-items:flex-end}
+.sheet{background:var(--bg);width:100%;max-width:560px;margin:0 auto;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sh h2{font-size:24px}
+.x{border:0;background:var(--card);color:var(--ink);width:40px;height:40px;border-radius:50%;font-size:22px}
+.nudge{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:var(--leaf);color:var(--bg)}
+.nudge.need{background:var(--cta);color:var(--oncta)}
+.nudge.ok{background:var(--card);color:var(--leaf);border:1px solid var(--leaf)}
+.nudge .nt{display:flex;align-items:center;gap:10px;font-size:16px;line-height:1.3}
+.nudge .nt b{font-size:18px}
+.nudge .ni{font-size:24px;flex:none}
+.nudge .np{height:8px;border-radius:8px;background:rgba(255,255,255,.35);margin-top:10px;overflow:hidden}
+.nudge .np i{display:block;height:100%;border-radius:8px;background:currentColor;transition:width .3s}
+.sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0;display:grid;gap:6px}
+.sum div{display:flex;justify-content:space-between}
+.sum .t{font-weight:700;font-size:18px;border-top:1px solid var(--line);padding-top:8px}
+label{display:grid;gap:5px;font-weight:700;font-size:14px;margin-bottom:10px}
+input,textarea{font:inherit;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.warn{color:var(--cta);font-size:14px;margin:0 0 10px}
+.adm h1{font-size:30px}
+.adm textarea{width:100%;min-height:150px;margin:8px 0 12px}
+.sm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.sm div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.sm b{display:block;font-size:20px;font-family:"Bricolage Grotesque",sans-serif}
+.sm span{font-size:12px;color:var(--mut)}
+.br{display:grid;grid-template-columns:1fr auto 84px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.br input{padding:8px;width:84px}
+.pk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pk p{margin:2px 0;color:var(--mut);font-size:14px}
+.adm h2{font-size:20px;margin:22px 0 10px}
+.adm a{color:var(--leaf);font-weight:700}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.sm2{grid-template-columns:1fr 1fr}
+.vd{font-weight:700;font-size:19px;margin:14px 0 4px}
+.good{color:var(--leaf)}.bad{color:var(--cta)}
+.sens{display:flex;justify-content:space-between;padding:8px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.tabs.top{padding-top:16px}
+.sr{display:grid;grid-template-columns:1fr auto 64px;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+.sr span:last-child{text-align:right}
+.sr small{color:var(--mut)}
+.sr.tot{border-bottom:0;font-weight:700;font-size:17px}
+.sd{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.sd summary{cursor:pointer;font-weight:700}
+.sd[open] summary{margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.chp{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:999px;font-weight:700}
+.chp[aria-pressed=true]{background:var(--leaf);border-color:var(--leaf);color:var(--bg)}
+.res{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:10px;color:var(--ink);font-weight:700;align-items:center}
+.res small{display:block;color:var(--mut);font-weight:400}
+.soonb{font-size:11px;font-weight:700;background:var(--bg);border:1px solid var(--line);color:var(--mut);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.addr{position:fixed;inset:0;background:var(--bg);z-index:25;overflow:auto;padding-bottom:40px}
+.sx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px}
+.sx .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sx small{color:var(--mut)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.app{--navh:58px;--navgap:10px}
+.app.shrunk{--navh:44px;--navgap:8px}
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navgap) + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:536px;z-index:6;padding:6px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,0,0,.2);transition:width .25s,bottom .25s}
+@supports (backdrop-filter:blur(8px)){.nav{background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(16px)}}
+.app.shrunk .nav{width:calc(100% - 72px)}
+.nav .in{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.nb{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:0;background:none;color:var(--ink);font-size:10.5px;font-weight:700;height:var(--navh);border-radius:999px;padding:0 2px;transition:height .25s,background .2s}
+.nb svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:width .25s,height .25s,transform .1s}
+.nb svg.on{fill:currentColor;fill-opacity:.3;stroke-width:2.4}
+.nb[aria-current=page]{color:var(--leaf);background:var(--bg);background:color-mix(in srgb,var(--leaf) 16%,transparent)}
+.nb:active svg{transform:scale(.86)}
+.nb span{max-height:14px;overflow:hidden;white-space:nowrap;transition:max-height .2s,opacity .2s}
+.app.shrunk .nb span{max-height:0;opacity:0}
+.app.shrunk .nb svg{width:22px;height:22px}
+.nb .bd{position:absolute;top:3px;left:calc(50% + 4px);min-width:17px;height:17px;border-radius:9px;background:var(--cta);color:var(--oncta);font-size:10px;font-style:normal;display:grid;place-items:center;padding:0 4px}
+.bar{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:536px;bottom:calc(var(--navh) + var(--navgap) + 22px + env(safe-area-inset-bottom,0px));background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.14);padding:10px 14px;z-index:5;transition:bottom .25s}
+.hdr2{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pgs{display:grid;gap:6px;margin-bottom:10px}
+.pk2{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin:0;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-weight:400}
+.pk2 input{width:20px;height:20px;padding:0;margin-top:2px;accent-color:var(--leaf);flex:none}
+.pk2 span{display:grid}
+.pk2 b{font-size:14px}
+.pk2 small{color:var(--mut);font-size:12.5px}
+.srch{position:relative;margin:4px 0 12px}
+.srch input{width:100%;padding:12px 40px 12px 16px;border-radius:999px;font-size:16px}
+.srch .x2{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:var(--line);color:var(--ink);font-size:18px;line-height:1}
+.rb[disabled]{opacity:.35;cursor:default}
+.trk{display:flex;gap:4px;margin:8px 0 2px}
+.trk i{flex:1;height:5px;border-radius:5px;background:var(--line)}
+.trk i.on{background:var(--leaf)}
+.trkl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:6px}
+.bxs{display:grid;gap:8px;margin:6px 0 12px}
+.bx{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:14px}
+.bx span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{background:var(--line);border-radius:6px;height:10px;overflow:hidden}
+.bf{background:var(--leaf);height:100%;border-radius:6px}
+.cp{display:flex;gap:10px;align-items:flex-start;margin-top:8px}
+.rail{position:sticky;top:8px;width:74px;flex:none;display:grid;gap:6px;max-height:calc(100vh - 150px);overflow-y:auto;scrollbar-width:none}
+.rb{border:0;background:var(--card);color:var(--mut);border-radius:14px;padding:9px 2px;font-size:11.5px;font-weight:700;line-height:1.15;display:grid;justify-items:center;gap:4px;border-left:4px solid transparent}
+.rb[aria-current=true]{background:var(--bg);color:var(--leaf);border:1px solid var(--line);border-left:4px solid var(--leaf)}
+.re{position:relative;font-size:26px;line-height:1}
+.re i{position:absolute;top:-6px;right:-12px;background:var(--cta);color:var(--oncta);font:700 10px/1 "DM Sans",sans-serif;border-radius:999px;padding:3px 5px;font-style:normal}
+.cl{flex:1;min-width:0}
+.cs{padding-bottom:14px;scroll-margin-top:12px}
+.cs .sec{margin:0 0 10px;font-size:19px}
+.cs .sec small{font:600 12px "DM Sans",sans-serif;color:var(--mut);margin-left:4px}
+.cl .row{padding:8px;gap:8px}
+.cl .em{width:40px;height:40px;font-size:24px}
+.cl .add{padding:5px 12px;font-size:14px}
+.cl .nm b{font-size:15px;line-height:1.25}
+.cl .nm span{font-size:12.5px;line-height:1.4}
+.cl .off{font-size:11px;padding:1px 6px}
+.cl .step button{width:30px;height:32px}
+.tiles{display:flex;gap:10px;overflow-x:auto;margin:16px -16px;padding:0 16px 4px;scroll-snap-type:x proximity;scroll-padding:0 16px;scrollbar-width:none}
+.tiles::-webkit-scrollbar{display:none}
+.tile{flex:none;width:112px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 6px;text-align:center;font-weight:700;color:var(--ink)}
+.tile span{display:block;font-size:32px}
+.tile small{display:block;color:var(--mut);font-weight:400}
+.sec{font-size:20px;margin:22px 0 10px}
+.empty{text-align:center;color:var(--mut);padding:36px 10px;display:grid;gap:12px;justify-items:center}
+.oc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.oc .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.oc p{margin:0;color:var(--mut);font-size:14px}
+.dcode{margin:8px 0;padding:10px 12px;border:2px dashed var(--leaf);border-radius:12px;text-align:center}
+.dcode span{display:block;font-size:12px;color:var(--mut);font-weight:700}
+.dcode b{display:block;font-size:30px;letter-spacing:8px;color:var(--leaf)}
+.dcode small{color:var(--mut);font-size:12px}
+.otp input{letter-spacing:6px;font-size:20px;text-align:center}
+select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--card);color:var(--ink)}
+.chip{font-size:12px;font-weight:700;background:var(--bg);color:var(--leaf);padding:3px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.ghost{background:none;border:2px solid var(--line);color:var(--ink);border-radius:999px;padding:11px 20px;font-weight:700}
+.emw{position:relative;flex:none}
+.cam{position:absolute;right:-8px;bottom:-8px;min-width:34px;height:28px;border:2px solid var(--card);background:var(--cta);color:var(--oncta);border-radius:999px;font-size:13px;line-height:1;padding:0 6px;display:flex;gap:3px;align-items:center;justify-content:center;font-weight:700}
+.pv{position:fixed;inset:0;background:rgba(8,12,10,.96);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.pvx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:2}
+.pvdeck{position:relative;width:min(86vw,400px);aspect-ratio:3/4;max-height:62vh}
+.pvc{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#1d2620;box-shadow:0 12px 34px rgba(0,0,0,.5);touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none;transition:transform .3s cubic-bezier(.2,.8,.3,1),opacity .24s}
+.pvc.drag{transition:none;cursor:grabbing}
+.pvc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.pvcap{position:absolute;left:0;right:0;bottom:0;padding:54px 18px 16px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.72));display:flex;flex-direction:column;font-weight:700}
+.pvcap b{font-size:20px;font-family:"Bricolage Grotesque",sans-serif}
+.pvcap span{font-size:15px}
+.pvcap s{opacity:.7;margin-right:6px}
+.pvdots{display:flex;gap:6px;margin:16px 0 4px}
+.pvdots i{width:7px;height:7px;border-radius:50%;background:#58675e}
+.pvdots i.on{background:#fff}
+.pvhint{color:#c9d4cd;font-size:14px;margin:0 0 6px}
+.pvempty{color:#fff;font-size:18px}
+.pvbar{display:flex;align-items:center;gap:18px;margin-top:10px}
+.pvbar .rb{width:56px;height:56px}
+.pvbar .add{background:var(--card)}
+.pm{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:8px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pth{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--bg)}
+.pth img{width:100%;height:100%;object-fit:cover}
+.pth button{position:absolute;top:4px;right:4px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:18px}
+.up{position:relative;display:flex;justify-content:center;border:2px dashed var(--leaf);border-radius:10px;padding:10px;color:var(--leaf);font-weight:700;cursor:pointer;margin:0}
+.up input{position:absolute;opacity:0;width:1px;height:1px}
+.up:focus-within{outline:3px solid var(--cta);outline-offset:2px}
+.nm s{color:var(--mut);margin-right:6px}
+.nm strong{color:var(--ink)}
+.off{font-style:normal;background:var(--cta);color:var(--oncta);font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:6px;white-space:nowrap}
+.ci{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px}
+.ci .l1{display:grid;grid-template-columns:54px 1fr 42px;gap:8px;align-items:center}
+.ci .l2{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+.ci input,.ci select{width:100%;min-width:0;padding:8px 6px;font-size:15px}
+.ci small{display:block;font-size:11px;color:var(--mut);margin-bottom:2px}
+.ci .dl{height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--cta);font-size:18px}
+.addbox{border:2px dashed var(--leaf)}
+.pch,.pc .t{display:grid;grid-template-columns:1fr 64px 64px 64px;gap:6px;align-items:center}
+.pch{font-size:12px;color:var(--mut);padding:0 10px;margin-bottom:6px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.pc input{padding:7px 6px;width:100%;min-width:0;font-size:15px}
+.pc .r{font-size:13px;margin-top:4px}
+.mid{color:#c98a0b}
+.pg{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:5px}
+.pg i{display:block;height:100%;background:var(--leaf);transition:width .25s}
+.lg{padding-top:7vh}
+.lgc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:20px}
+.ph{display:flex;gap:8px}
+.ph span{display:grid;place-items:center;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:700}
+.ph input{flex:1;min-width:0;font-size:18px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:15px;font-weight:400;margin:14px 0}
+.chk input{width:22px;height:22px;margin:1px 0 0;padding:0;flex:none;accent-color:var(--leaf)}
+.otp{letter-spacing:.45em;text-align:center;font-size:26px;font-weight:700}
+.lk{background:none;border:0;color:var(--leaf);font-weight:700;padding:0;text-decoration:underline}
+.demo{background:var(--bg);border:1px dashed var(--cta);border-radius:10px;padding:8px 10px;font-size:14px;margin:0 0 12px}
+.terms h3{font-size:16px;margin:14px 0 4px}
+.terms p{margin:0;color:var(--mut);font-size:15px}
+/* Phones zoom into any box whose text is under 16px, so every field is at least 16px */
+input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{font-size:16px!important}
+.otp input{font-size:20px!important}
+.ph input{font-size:18px!important}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+const { useState } = React;
+const h = htm.bind(React.createElement);
+
+// Edit these settings
+const CFG = {
+  brand: "Farm Fresh Box",
+  society: "Lodha Amara, Thane",
+  wa: "919999999999",
+  close: "Thursday 9 PM",
+  delivery: "Saturday morning",
+  min: 700, minKg: 0, freeAbove: 1000, fee: 40,
+  // Login. demoOtp:true shows the OTP on screen (no SMS, NOT secure). For real OTPs set demoOtp:false
+  // and set api to your backend base URL, which must provide:
+  //   POST {api}/send-otp   body {mobile}        -> {ok:true}
+  //   POST {api}/verify-otp body {mobile, otp}   -> {ok:true}
+  demoOtp: true, api: "",
+  // TODO: after deploying to Render, put the site address here (for example "https://farm-fresh-box.onrender.com"). Society invite links are built from it.
+  pageUrl: "https://claude.ai/artifact/NSkkucbhtFf5Fr8AmHHiDd"
+};
+// Admin settings (minimum order, cut-off, delivery slot). Saved in this browser; a backend will share them later.
+const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 40, freeAbove: 1000 };
+(function applySettings() {
+  try {
+    const o = JSON.parse(localStorage.getItem(SETK) || "null");
+    if (o && typeof o === "object") {
+      if (Number.isFinite(+o.min) && +o.min >= 0) CFG.min = Math.round(+o.min);
+      if (Number.isFinite(+o.fee) && +o.fee >= 0 && o.fee !== "" && o.fee != null) CFG.fee = Math.round(+o.fee);
+      if (Number.isFinite(+o.freeAbove) && +o.freeAbove >= 0 && o.freeAbove !== "" && o.freeAbove != null) CFG.freeAbove = Math.round(+o.freeAbove);
+      if (o.close) CFG.close = String(o.close); if (o.delivery) CFG.delivery = String(o.delivery);
+    }
+  } catch (e) {}
+})();
+const CATS = ["Vegetables", "Fruits", "Pulses", "Staples", "Dry food"];
+// Sample prices only. Replace with your real landed prices.
+const DEFAULT_ITEMS = [
+  { id: "oni", c: 0, n: "Onion", e: "🧅", u: "kg", p: 35, mrp: 50 },
+  { id: "pot", c: 0, n: "Potato", e: "🥔", u: "kg", p: 30, mrp: 40 },
+  { id: "tom", c: 0, n: "Tomato", e: "🍅", u: "kg", p: 40, mrp: 60 },
+  { id: "bhi", c: 0, n: "Lady finger (bhindi)", e: "🫛", u: "kg", p: 60, mrp: 90 },
+  { id: "bri", c: 0, n: "Brinjal", e: "🍆", u: "kg", p: 45, mrp: 60 },
+  { id: "cab", c: 0, n: "Cabbage", e: "🥬", u: "kg", p: 25, mrp: 40 },
+  { id: "car", c: 0, n: "Carrot", e: "🥕", u: "kg", p: 50, mrp: 70 },
+  { id: "cuc", c: 0, n: "Cucumber", e: "🥒", u: "kg", p: 30, mrp: 50 },
+  { id: "chi", c: 0, n: "Green chilli", e: "🌶️", u: "kg", p: 80, mrp: 120 },
+  { id: "cor", c: 0, n: "Coriander", e: "🌿", u: "bunch", p: 15, mrp: 25, w: 0.1 },
+  { id: "spi", c: 0, n: "Spinach", e: "🥬", u: "bunch", p: 20, mrp: 30, w: 0.25 },
+  { id: "cap", c: 0, n: "Capsicum", e: "🫑", u: "kg", p: 70, mrp: 100 },
+  { id: "ban", c: 1, n: "Banana", e: "🍌", u: "dozen", p: 60, mrp: 80, w: 1.2 },
+  { id: "app", c: 1, n: "Apple", e: "🍎", u: "kg", p: 150, mrp: 200 },
+  { id: "ora", c: 1, n: "Orange", e: "🍊", u: "kg", p: 80, mrp: 110 },
+  { id: "lem", c: 1, n: "Lemon", e: "🍋", u: "6 pcs", p: 30, mrp: 40, w: 0.3 },
+  { id: "gra", c: 1, n: "Grapes", e: "🍇", u: "kg", p: 90, mrp: 130 },
+  { id: "tur", c: 2, n: "Toor dal", e: "🟡", u: "kg", p: 150, mrp: 180 },
+  { id: "mdl", c: 2, n: "Moong dal", e: "🟨", u: "kg", p: 120, mrp: 150 },
+  { id: "cdl", c: 2, n: "Chana dal", e: "🟠", u: "kg", p: 95, mrp: 120 },
+  { id: "mas", c: 2, n: "Masoor dal", e: "🔴", u: "kg", p: 90, mrp: 115 },
+  { id: "urd", c: 2, n: "Urad dal", e: "⚪", u: "kg", p: 130, mrp: 160 },
+  { id: "mog", c: 2, n: "Whole moong", e: "🟢", u: "kg", p: 110, mrp: 140 },
+  { id: "kab", c: 2, n: "Kabuli chana", e: "🫘", u: "kg", p: 120, mrp: 150 },
+  { id: "raj", c: 2, n: "Rajma", e: "🫘", u: "kg", p: 140, mrp: 180 },
+  { id: "kal", c: 2, n: "Kala chana", e: "🟤", u: "kg", p: 90, mrp: 115 },
+  { id: "mat", c: 2, n: "Matki (moth beans)", e: "🫘", u: "kg", p: 120, mrp: 150 },
+  { id: "att", c: 3, n: "Wheat atta", e: "🌾", u: "kg", p: 42, mrp: 55 },
+  { id: "kol", c: 3, n: "Kolam rice", e: "🍚", u: "kg", p: 55, mrp: 70 },
+  { id: "ric", c: 3, n: "Basmati rice", e: "🍚", u: "kg", p: 90, mrp: 110 },
+  { id: "sug", c: 3, n: "Sugar", e: "🍬", u: "kg", p: 45, mrp: 52 },
+  { id: "sal", c: 3, n: "Salt", e: "🧂", u: "kg", p: 22, mrp: 28 },
+  { id: "poh", c: 3, n: "Poha", e: "🥣", u: "kg", p: 55, mrp: 70 },
+  { id: "rav", c: 3, n: "Rava (sooji)", e: "🌾", u: "kg", p: 45, mrp: 58 },
+  { id: "bes", c: 3, n: "Besan", e: "🌾", u: "kg", p: 85, mrp: 110 },
+  { id: "oil", c: 3, n: "Groundnut oil", e: "🛢️", u: "litre", p: 180, mrp: 220, w: 0.9 },
+  { id: "jag", c: 3, n: "Jaggery (gul)", e: "🟫", u: "kg", p: 60, mrp: 80 },
+  { id: "alm", c: 4, n: "Almonds (badam)", e: "🌰", u: "kg", p: 750, mrp: 950 },
+  { id: "cas", c: 4, n: "Cashew (kaju)", e: "🥜", u: "kg", p: 700, mrp: 900 },
+  { id: "rai", c: 4, n: "Raisins (kishmish)", e: "🍇", u: "kg", p: 320, mrp: 420 },
+  { id: "dat", c: 4, n: "Dates (khajoor)", e: "🟤", u: "kg", p: 220, mrp: 300 },
+  { id: "wal", c: 4, n: "Walnuts (akhrot)", e: "🌰", u: "kg", p: 850, mrp: 1100 },
+  { id: "pnt", c: 4, n: "Peanuts (shengdana)", e: "🥜", u: "kg", p: 120, mrp: 160 },
+  { id: "mak", c: 4, n: "Makhana (fox nuts)", e: "⚪", u: "250 g", p: 180, mrp: 250, w: 0.25 },
+  { id: "sab", c: 4, n: "Sabudana", e: "⚪", u: "kg", p: 80, mrp: 100 },
+  { id: "tea", c: 4, n: "Tea powder", e: "🍵", u: "kg", p: 380, mrp: 480 },
+  { id: "tur2", c: 4, n: "Turmeric powder (haldi)", e: "🟡", u: "200 g", p: 40, mrp: 55, w: 0.2 },
+  { id: "rcp", c: 4, n: "Red chilli powder", e: "🌶️", u: "200 g", p: 70, mrp: 95, w: 0.2 },
+  { id: "cum", c: 4, n: "Cumin seeds (jeera)", e: "🟤", u: "200 g", p: 90, mrp: 120, w: 0.2 },
+  { id: "mus", c: 4, n: "Mustard seeds (rai)", e: "⚫", u: "200 g", p: 30, mrp: 45, w: 0.2 },
+  { id: "cop", c: 4, n: "Coriander powder (dhania)", e: "🟢", u: "200 g", p: 45, mrp: 60, w: 0.2 },
+  { id: "gms", c: 4, n: "Goda / garam masala", e: "🟫", u: "100 g", p: 55, mrp: 75, w: 0.1 },
+  { id: "tam", c: 4, n: "Tamarind (chinch)", e: "🟤", u: "250 g", p: 40, mrp: 55, w: 0.25 }
+];
+// Catalogue: your own edits (from the Catalogue tab) are kept on this device only.
+// To publish changes to customers, copy the catalogue and replace DEFAULT_ITEMS above.
+const CK = "wfb_catalogue_v2";
+function loadCatalogue() {
+  try {
+    const o = JSON.parse(localStorage.getItem(CK) || "null");
+    if (Array.isArray(o) && o.length && o.every(x => x && x.id && x.n)) {
+      // add the Dry food items to catalogues saved before that category existed
+      if (!o.some(x => +x.c === 4)) return o.concat(DEFAULT_ITEMS.filter(x => x.c === 4).map(x => ({ ...x })));
+      return o;
+    }
+  } catch (e) {}
+  return DEFAULT_ITEMS.map(x => ({ ...x }));
+}
+let ITEMS = loadCatalogue();
+
+// Societies. Sample row only: use Admin > Societies to paste your real list.
+const DEFAULT_SOCIETIES = [
+  { id: "lodha-amara", name: "Lodha Amara", area: "Kolshet Road, Thane", pincode: "400607", buildings: ["Tower A", "Tower B", "Tower C"], day: "", drop: "Main gate", min: 0, status: "active", alias: ["Amara", "Kolshet"] }
+];
+const SOCK = "wfb_societies";
+function loadSocieties() {
+  try {
+    const o = JSON.parse(localStorage.getItem(SOCK) || "null");
+    if (Array.isArray(o) && o.every(x => x && x.id && x.name)) return o;
+  } catch (e) {}
+  return DEFAULT_SOCIETIES.map(x => ({ ...x }));
+}
+let SOCIETIES = loadSocieties();
+const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const splitList = t => (t || "").split(/[;|]/).map(x => x.trim()).filter(Boolean);
+function parseCsvLine(line) {
+  const out = []; let cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { out.push(cur.trim()); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur.trim());
+  return out;
+}
+function parseSocieties(text) {
+  const rows = [], issues = [], used = new Set();
+  text.split(/\r?\n/).forEach((line, li) => {
+    if (!line.trim()) return;
+    const c = parseCsvLine(line);
+    if (li === 0 && /^society/i.test(c[0])) return;
+    const [name, area, pin, bld, day, drop, min, status, alias] = c;
+    if (!name || !area) { issues.push("Line " + (li + 1) + ": society name and area are required, so this row was skipped."); return; }
+    if (pin && !/^\d{6}$/.test(pin)) issues.push("Line " + (li + 1) + ": pincode " + pin + " is not 6 digits (kept anyway).");
+    let id = slug(name) || "society", n = 2;
+    while (used.has(id)) id = slug(name) + "-" + n++;
+    used.add(id);
+    rows.push({ id, name, area, pincode: pin || "", buildings: splitList(bld), day: day || "", drop: drop || "", min: +min || 0, status: /^(soon|coming)/i.test(status || "") ? "soon" : "active", alias: splitList(alias) });
+  });
+  return { rows, issues };
+}
+const csvCell = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+const societiesCsv = list => ["society,area,pincode,buildings,day,drop point,min order,status,aliases"].concat(list.map(x => [x.name, x.area, x.pincode, (x.buildings || []).join(";"), x.day, x.drop, x.min || "", x.status, (x.alias || []).join(";")].map(csvCell).join(","))).join("\n");
+const BOX = { name: "Family Veg Box", items: { tom: 2, pot: 2, oni: 2, car: 1, spi: 2, cap: 1 } };
+const boxLines = () => Object.keys(BOX.items).map(k => ({ it: ITEMS.find(i => i.id === k), q: BOX.items[k] })).filter(x => x.it);
+const boxPrice = () => boxLines().reduce((s, x) => s + x.q * x.it.p, 0);
+
+function Stepper({ q, label, onAdd, onSub }) {
+  return q === 0
+    ? h`<button class="add" onClick=${onAdd} aria-label=${"Add " + label}>Add</button>`
+    : h`<div class="step"><button onClick=${onSub} aria-label=${"Remove one " + label}>−</button><span>${q}</span><button onClick=${onAdd} aria-label=${"Add one " + label}>+</button></div>`;
+}
+
+function Row({ i, q, change, np, onPhotos }) {
+  return h`<li class="row">
+    <div class="emw"><div class="em" aria-hidden="true">${i.e}</div>${np > 0 && h`<button class="cam" aria-label=${"See " + np + " photos of " + i.n} onClick=${() => onPhotos(i)}>📷${np}</button>`}</div>
+    <div class="nm"><b>${i.n}</b><span>${i.mrp > i.p && h`<s>₹${i.mrp}</s>`}<strong>₹${i.p}</strong> <span style=${{ whiteSpace: "nowrap" }}>per ${i.u}</span>${i.w ? " (about " + (i.w < 1 ? Math.round(i.w * 1000) + " g" : i.w + " kg") + ")" : ""}${i.mrp > i.p && h`<em class="off">${Math.round((i.mrp - i.p) / i.mrp * 100)}% off</em>`}</span></div>
+    <${Stepper} q=${q} label=${i.n} onAdd=${() => change(i.id, 1)} onSub=${() => change(i.id, -1)} />
+  </li>`;
+}
+
+// ---- Item photos: stored on this device (IndexedDB) ----
+const ADMIN_MOBILES = ["9892443771"]; // Test admin number. Client-side check only; real security needs a backend.
+const photoStore = { map: {}, subs: [] };
+const notifyPhotos = () => photoStore.subs.forEach(f => f());
+function photoDb() {
+  return new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error("no indexedDB"));
+    const r = indexedDB.open("wfb_photos", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("p");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function loadPhotos() {
+  try {
+    const db = await photoDb();
+    await new Promise(res => {
+      const rq = db.transaction("p").objectStore("p").openCursor();
+      rq.onsuccess = () => { const c = rq.result; if (c) { photoStore.map[c.key] = c.value; c.continue(); } else res(); };
+      rq.onerror = () => res();
+    });
+  } catch (e) {}
+  notifyPhotos();
+}
+async function savePhotos(id, arr) {
+  photoStore.map[id] = arr; notifyPhotos();
+  try {
+    const db = await photoDb();
+    await new Promise((res, rej) => {
+      const tx = db.transaction("p", "readwrite");
+      if (arr.length) tx.objectStore("p").put(arr, id); else tx.objectStore("p").delete(id);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    return true;
+  } catch (e) { return false; }
+}
+function usePhotos() {
+  const [, setV] = useState(0);
+  React.useEffect(() => {
+    const f = () => setV(v => v + 1);
+    photoStore.subs.push(f);
+    return () => { photoStore.subs = photoStore.subs.filter(x => x !== f); };
+  }, []);
+  return photoStore.map;
+}
+async function fileToDataUrl(file) {
+  const raw = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+  if (file.type === "image/gif") return raw;
+  try {
+    const img = await Promise.race([
+      new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = raw; }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("slow")), 4000))
+    ]);
+    const sc = Math.min(1, 900 / Math.max(img.width, img.height));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+    const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+    return cv.toDataURL("image/jpeg", 0.8);
+  } catch (e) { return raw; }
+}
+
+function PhotoViewer({ item, photos, q, change, onClose }) {
+  const n = photos.length;
+  const [idx, setIdx] = useState(0);
+  const [dx, setDx] = useState(0);
+  const [drag, setDrag] = useState(false);
+  const [out, setOut] = useState(0);
+  const start = React.useRef(0);
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fling = dir => {
+    if (out || n < 2) { setDx(0); return; }
+    setOut(dir);
+    setTimeout(() => { setIdx(i => (i + 1) % n); setOut(0); setDx(0); }, calm ? 0 : 240);
+  };
+  const back = () => { if (!out && n > 1) setIdx(i => (i - 1 + n) % n); };
+  React.useEffect(() => {
+    const k = e => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") fling(1);
+      if (e.key === "ArrowLeft") back();
+    };
+    document.addEventListener("keydown", k);
+    return () => document.removeEventListener("keydown", k);
+  });
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+  const down = e => { if (out) return; setDrag(true); start.current = e.clientX; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} };
+  const move = e => { if (drag) setDx(e.clientX - start.current); };
+  const up = () => { if (!drag) return; setDrag(false); if (Math.abs(dx) > 80) fling(dx > 0 ? 1 : -1); else setDx(0); };
+  const cards = [];
+  for (let k = Math.min(3, n) - 1; k >= 0; k--) {
+    const top = k === 0, at = (idx + k) % n;
+    const tr = top
+      ? (out ? "translateX(" + out * (window.innerWidth + 300) + "px) rotate(" + out * 25 + "deg)" : "translateX(" + dx + "px) rotate(" + dx / 18 + "deg)")
+      : "translateY(" + k * 14 + "px) scale(" + (1 - k * 0.05) + ")";
+    cards.push(h`<div key=${idx + "-" + k} class=${"pvc" + (top && drag ? " drag" : "")} style=${{ transform: tr, opacity: top && out ? 0 : 1 }}
+      onPointerDown=${top ? down : null} onPointerMove=${top ? move : null} onPointerUp=${top ? up : null} onPointerCancel=${top ? up : null}>
+      <img src=${photos[at]} alt=${item.n + " photo " + (at + 1) + " of " + n} draggable="false" />
+      ${top && h`<div class="pvcap"><b>${item.n}</b><span>${item.mrp > item.p && h`<s>₹${item.mrp}</s>`}₹${item.p} per ${item.u}</span></div>`}
+    </div>`);
+  }
+  return h`<div class="pv" role="dialog" aria-modal="true" aria-label=${"Photos of " + item.n}>
+    <button class="x pvx" aria-label="Close photos" onClick=${onClose}>×</button>
+    ${n === 0 ? h`<p class="pvempty">No photos yet for ${item.n}.</p>` : h`<div class="pvdeck">${cards}</div>`}
+    ${n > 1 && h`<div class="pvdots" aria-hidden="true">${photos.map((_, j) => h`<i key=${j} class=${j === idx ? "on" : ""}></i>`)}</div>`}
+    ${n > 1 && h`<p class="pvhint">Swipe the photo left or right</p>`}
+    <div class="pvbar">
+      ${n > 1 && h`<button class="rb" aria-label="Previous photo" onClick=${back}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg></button>`}
+      <${Stepper} q=${q} label=${item.n} onAdd=${() => change(item.id, 1)} onSub=${() => change(item.id, -1)} />
+      ${n > 1 && h`<button class="rb like" aria-label="Next photo" onClick=${() => fling(1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>`}
+    </div>
+  </div>`;
+}
+
+const ICONS = {
+  home: "M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10",
+  cat: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+  cart: "M2 3h3l2.7 12.4a2 2 0 002 1.6h8.1a2 2 0 002-1.5L21.5 8H6M9 21h.01M18 21h.01",
+  orders: "M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2",
+  profile: "M12 4a4 4 0 100 8 4 4 0 000-8zM4 21c0-4 3.6-6 8-6s8 2 8 6"
+};
+const NAV = [["home", "Home"], ["cat", "Category"], ["cart", "Cart"], ["orders", "Orders"], ["profile", "Profile"]];
+const CAT_E = ["🥬", "🍎", "🫘", "🍚", "🥜"];
+const lsGet = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+// Optional GPS location. Only runs for people who said yes (see GeoAsk and the Profile switch).
+function captureLocation(cb) {
+  if (!navigator.geolocation) { cb && cb("unsupported"); return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = +pos.coords.latitude.toFixed(4), lng = +pos.coords.longitude.toFixed(4);
+    let pin = "";
+    try {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 4000);
+      const r = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=" + lat + "&lon=" + lng, { signal: ctl.signal, headers: { Accept: "application/json" } });
+      clearTimeout(t);
+      const j = await r.json();
+      pin = String((j.address || {}).postcode || "").replace(/\s/g, "");
+    } catch (e) {}
+    track("location", { lat, lng, acc: Math.round(pos.coords.accuracy || 0), pin });
+    cb && cb("ok", { lat, lng, pin });
+  }, err => cb && cb(err && err.code === 1 ? "denied" : "error"), { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+}
+// Usage insights: what people do in the app (kept in this browser for testing; a backend will collect it for everyone later)
+const EVK = "wfb_events";
+function sessId() {
+  try { let s = sessionStorage.getItem("wfb_sid"); if (!s) { s = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("wfb_sid", s); } return s; } catch (e) { return "x"; }
+}
+function track(type, d) {
+  try {
+    const m = loadSession(), p = m ? lsGet("wfb_profile_" + m, {}) : {};
+    const l = lsGet(EVK, []);
+    l.push({ t: Date.now(), type, sid: sessId(), m: m || "", soc: p.soc || "", role: ADMIN_MOBILES.includes(m) ? "admin" : "customer", ...d });
+    lsSet(EVK, l.slice(-5000));
+  } catch (e) {}
+}
+const fmtDate = t => new Date(t).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+function NavBar({ tab, go, count }) {
+  return h`<nav class="nav" aria-label="Main"><div class="in">
+    ${NAV.map(([k, l]) => h`<button key=${k} class="nb" aria-current=${tab === k ? "page" : null} aria-label=${k === "cart" && count > 0 ? "Cart, " + count + " items" : l} onClick=${() => go(k)}>
+      <svg class=${tab === k ? "on" : ""} viewBox="0 0 24 24" aria-hidden="true"><path d=${ICONS[k]} /></svg><span>${l}</span>${k === "cart" && count > 0 && h`<i class="bd">${count}</i>`}
+    </button>`)}
+  </div></nav>`;
+}
+
+function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
+  const OK = "wfb_orders_" + mobile;
+  const soc = SOCIETIES.find(x => x.id === profile.soc) || null;
+  const linkSoc = link && link.status === "active" ? link : null;
+  const effSoc = (soc && soc.status === "active" ? soc : null) || linkSoc;
+  const addrOk = !!(soc && soc.status === "active" && profile.name && profile.flat && (!(soc.buildings || []).length || profile.bld));
+  const minOrder = (effSoc && +effSoc.min) || CFG.min;
+  const dayText = (effSoc && effSoc.day) || CFG.delivery;
+  const addr = soc ? [profile.flat, profile.bld, soc.name].filter(Boolean).join(", ") : "";
+  const [editAddr, setEditAddr] = useState(false);
+  const [cart, setCart] = useState({});
+  const [tab, setTab] = useState("home");
+  const [cat, setCat] = useState(0);
+  const [q, setQ] = useState("");
+  const qn = q.trim().toLowerCase();
+  const match = i => !qn || i.n.toLowerCase().includes(qn);
+  const GK = "wfb_geo_" + mobile;
+  const [geo, setGeo] = useState(() => lsGet(GK, {}));
+  const [geoAsk, setGeoAsk] = useState(false);
+  const [geoMsg, setGeoMsg] = useState("");
+  const doCapture = () => captureLocation((st, v) => {
+    if (st === "ok") { const g = { consent: "yes", t: Date.now(), lat: v.lat, lng: v.lng, pin: v.pin }; lsSet(GK, g); setGeo(g); setGeoMsg(""); }
+    else setGeoMsg(st === "denied" ? "Your browser blocked location access. Allow it in the browser's site settings and try again." : st === "unsupported" ? "This device does not support location." : "Could not get your location. Please try again.");
+  });
+  const setConsent = yes => {
+    const g = { ...geo, consent: yes ? "yes" : "no", t: Date.now() };
+    if (!yes) {
+      lsSet(EVK, lsGet(EVK, []).filter(e => !(e.type === "location" && e.m === mobile)));
+      delete g.lat; delete g.lng; delete g.pin; setGeoMsg("Location sharing is off. We deleted the location points we held for you.");
+    }
+    lsSet(GK, g); setGeo(g); setGeoAsk(false);
+    track(yes ? "location_on" : "location_off");
+    if (yes) doCapture();
+  };
+  React.useEffect(() => {
+    try {
+      if (geo.consent === "yes" && !sessionStorage.getItem("wfb_geo_" + mobile)) { sessionStorage.setItem("wfb_geo_" + mobile, "1"); doCapture(); }
+    } catch (e) {}
+    if (!geo.consent) { const t = setTimeout(() => setGeoAsk(true), 1500); return () => clearTimeout(t); }
+  }, []);
+  React.useEffect(() => {
+    try {
+      if (!sessionStorage.getItem("wfb_vis_" + mobile)) {
+        sessionStorage.setItem("wfb_vis_" + mobile, "1");
+        track("visit", { entry: link ? link.id : "direct", w: window.innerWidth });
+      }
+    } catch (e) {}
+  }, []);
+  React.useEffect(() => { track("view", { page: tab }); }, [tab]);
+  React.useEffect(() => {
+    if (qn.length < 2) return;
+    const t = setTimeout(() => track("search", { q: qn, results: ITEMS.filter(match).length, page: tab }), 900);
+    return () => clearTimeout(t);
+  }, [qn]);
+  const searchBox = h`<div class="srch"><input type="search" aria-label="Search items" placeholder="Search vegetables, dal, dry fruits" value=${q} onInput=${e => setQ(e.target.value)} />${q && h`<button class="x2" aria-label="Clear search" onClick=${() => setQ("")}>×</button>`}</div>`;
+  const spyLock = React.useRef(0);
+  const jumpCat = i => {
+    setCat(i); spyLock.current = Date.now() + 700;
+    const el = document.getElementById("cs-" + i);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 12, behavior: "smooth" });
+  };
+  const [viewer, setViewer] = useState(null);
+  const [terms, setTerms] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [shrunk, setShrunk] = useState(false);
+  React.useEffect(() => {
+    if (tab !== "cat") return;
+    const el = document.getElementById("cs-" + cat);
+    if (el && cat > 0) { spyLock.current = Date.now() + 500; window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 12); }
+    const f = () => {
+      if (Date.now() < spyLock.current) return;
+      let cur = 0;
+      CATS.forEach((c, i) => { const e = document.getElementById("cs-" + i); if (e && e.getBoundingClientRect().top <= 90) cur = i; });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) cur = CATS.length - 1;
+      setCat(cur);
+    };
+    window.addEventListener("scroll", f, { passive: true });
+    return () => window.removeEventListener("scroll", f);
+  }, [tab]);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [orders, setOrders] = useState(() => lsGet(OK, []));
+  const [f, setF] = useState({ phone: mobile || "", note: "" });
+  const pm = usePhotos();
+  const photosFor = i => (pm[i.id] && pm[i.id].length ? pm[i.id] : i.photos || []);
+  const go = k => { setTab(k); setShrunk(false); try { window.scrollTo(0, 0); } catch (e) {} };
+  React.useEffect(() => {
+    let last = window.scrollY || 0, busy = false;
+    const on = () => {
+      if (busy) return;
+      busy = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY || 0, d = y - last;
+        if (y < 40) { setShrunk(false); last = y; }
+        else if (d > 6) { setShrunk(true); last = y; }
+        else if (d < -6) { setShrunk(false); last = y; }
+        busy = false;
+      });
+    };
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+  const resetCart = () => {
+    if (!confirmReset) { setConfirmReset(true); setTimeout(() => setConfirmReset(false), 3000); return; }
+    setCart({}); setConfirmReset(false);
+  };
+
+  const change = (id, d) => {
+    if (d > 0) { const it = ITEMS.find(x => x.id === id); track("add", { item: it ? it.n : id }); }
+    setCart(c => {
+      const q = Math.max(0, (c[id] || 0) + d), n = { ...c };
+      if (q === 0) delete n[id]; else n[id] = q;
+      return n;
+    });
+  };
+  const addBox = () => setCart(c => {
+    const n = { ...c };
+    boxLines().forEach(x => { n[x.it.id] = (n[x.it.id] || 0) + x.q; });
+    return n;
+  });
+  const lines = ITEMS.filter(i => cart[i.id]).map(i => ({ ...i, q: cart[i.id] }));
+  const sub = lines.reduce((s, l) => s + l.q * l.p, 0);
+  const kg = lines.reduce((s, l) => s + l.q * (l.w || 1), 0);
+  const kgR = Math.round(kg * 10) / 10;
+  const save = lines.reduce((s, l) => s + (l.mrp > l.p ? l.q * (l.mrp - l.p) : 0), 0);
+  const fee = sub === 0 || sub >= CFG.freeAbove ? 0 : CFG.fee;
+  const total = sub + fee;
+  const ready = sub >= minOrder && addrOk;
+  const set = k => e => setF({ ...f, [k]: e.target.value });
+  const setName = e => onProfile({ ...profile, name: e.target.value });
+  const rowFor = (i, q) => h`<${Row} key=${i.id} i=${i} q=${q} change=${change} np=${photosFor(i).length} onPhotos=${v => { track("photos", { item: v.n }); setViewer(v); }} />`;
+  const deals = ITEMS.filter(i => i.mrp > i.p).sort((a, b) => (b.mrp - b.p) / b.mrp - (a.mrp - a.p) / a.mrp).slice(0, 6);
+
+  const send = () => {
+    const msg = ["New order: " + CFG.brand, "Name: " + profile.name, "Society: " + (soc ? soc.name : ""), "Address: " + [profile.flat, profile.bld].filter(Boolean).join(", "), ...[profile.det ? "Details: " + profile.det : "", soc && soc.drop ? "Drop point: " + soc.drop : "", f.phone ? "Phone: " + f.phone : ""].filter(Boolean), "",
+      ...lines.map(l => "• " + l.n + ": " + l.q + " × " + l.u + " = ₹" + l.q * l.p),
+      "", "Total weight: " + kgR + " kg", "Items: ₹" + sub, save > 0 ? "Saved vs local prices: ₹" + save : "", "Delivery: ₹" + fee, "Total: ₹" + total, "Delivery: " + dayText,
+      f.note ? "Note: " + f.note : ""].filter((x, i, a) => x !== "" || a[i - 1] !== "").join("\n");
+    window.open("https://wa.me/" + CFG.wa + "?text=" + encodeURIComponent(msg), "_blank");
+    const o = { id: Date.now(), t: Date.now(), status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p })), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : "") };
+    const next = [o, ...orders].slice(0, 30);
+    setOrders(next); lsSet(OK, next);
+    track("order", { total, items: lines.length, society: soc ? soc.name : "" });
+    if (o.assignedTo) audit("assigned", { ...orderTag(o), emp: o.assignedTo, by: "auto" });
+    setCart({}); setF({ ...f, note: "" });
+    setNotice("Your order was sent on WhatsApp. We will confirm it there.");
+    go("orders");
+  };
+  const reorder = o => {
+    setCart(c => { const n = { ...c }; o.lines.forEach(l => { if (ITEMS.some(i => i.id === l.id)) n[l.id] = (n[l.id] || 0) + l.q; }); return n; });
+    setNotice(""); go("cart");
+  };
+  const clearOrders = () => { setOrders([]); lsSet(OK, []); };
+
+  const bar = (tab === "home" || tab === "cat") && lines.length > 0 && h`<div class="bar"><div class="in" style=${{ maxWidth: 560, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
+    <div style=${{ flex: 1 }}><b>₹${sub}</b><div class="note" style=${{ margin: 0 }}>${lines.length} item${lines.length > 1 ? "s" : ""} · ${sub < minOrder ? "₹" + (minOrder - sub) + " more to order" : kgR + " kg"}</div><div class="pg"><i style=${{ width: Math.min(100, sub / minOrder * 100) + "%" }}></i></div></div>
+    <button class="cta" onClick=${() => go("cart")}>View cart</button>
+  </div></div>`;
+
+  return h`<div class=${"app" + (shrunk ? " shrunk" : "")}>
+    <div class="wrap">
+      ${tab === "home" && h`<div>
+        <header><h1>${CFG.brand}</h1><p class="sub">${profile.name ? "Hi " + profile.name.split(" ")[0] + ". " : ""}Fresh from APMC to ${effSoc ? effSoc.name : "your society"}</p></header>
+        <div class="banner"><span>🕘</span><span>Orders placed by <b>${CFG.close}</b>. Delivery <b>${dayText}</b>. Minimum order <b>₹${minOrder}</b>.</span></div>
+        <p class="note">Prices shown are sample prices.</p>
+        ${searchBox}
+        ${qn && h`<div><h2 class="sec">${ITEMS.filter(match).length} result${ITEMS.filter(match).length === 1 ? "" : "s"}</h2>${ITEMS.filter(match).length === 0 ? h`<p class="note">No items match “${q}”. Try another word.</p>` : h`<ul>${ITEMS.filter(match).map(i => rowFor(i, cart[i.id] || 0))}</ul>`}</div>`}
+        ${!qn && boxLines().length > 0 && h`<div class="box">
+          <div><h2>${BOX.name}</h2><p>${boxLines().map(x => x.it.n).join(", ")} · ₹${boxPrice()}</p></div>
+          <button onClick=${addBox}>Add box</button>
+        </div>`}
+        ${!qn && h`<div class="tiles">${CATS.map((c, i) => h`<button key=${c} class="tile" onClick=${() => { setCat(i); go("cat"); }}><span>${CAT_E[i] || "🛒"}</span>${c}<small>${ITEMS.filter(x => +x.c === i).length} items</small></button>`)}</div>`}
+        ${!qn && deals.length > 0 && h`<div><h2 class="sec">Today’s best deals</h2><ul>${deals.map(i => rowFor(i, cart[i.id] || 0))}</ul></div>`}
+      </div>`}
+
+      ${tab === "cat" && h`<div>
+        <div style=${{ paddingTop: 12 }}>${searchBox}</div>
+        <div class="cp">
+        <nav class="rail" aria-label="Categories">
+          ${CATS.map((c, i) => { const n = lines.filter(l => +((ITEMS.find(x => x.id === l.id) || {}).c) === i).length; const has = ITEMS.some(x => +x.c === i && match(x)); return h`<button key=${c} class="rb" disabled=${!has} aria-current=${cat === i ? "true" : "false"} onClick=${() => jumpCat(i)}><span class="re">${CAT_E[i] || "🛒"}${n > 0 && h`<i>${n}</i>`}</span>${c}</button>`; })}
+        </nav>
+        <div class="cl">
+          ${qn && ITEMS.filter(match).length === 0 && h`<p class="note">No items match “${q}”. Try another word.</p>`}
+          ${CATS.map((c, i) => {
+            const its = ITEMS.filter(x => +x.c === i && match(x));
+            if (!its.length) return null;
+            const lastVis = Math.max(...CATS.map((cc, k) => ITEMS.some(x => +x.c === k && match(x)) ? k : -1));
+            return h`<section key=${c} id=${"cs-" + i} class="cs" style=${i === lastVis && !qn ? { minHeight: "calc(100vh - 230px)" } : null}>
+              <h2 class="sec">${c} <small>${its.length} items</small></h2>
+              <ul>${its.map(x => rowFor(x, cart[x.id] || 0))}</ul>
+            </section>`;
+          })}
+        </div>
+        </div>
+      </div>`}
+
+      ${tab === "cart" && h`<div>
+        <header class="hdr2"><h1>Your cart</h1>${lines.length > 0 && h`<button class="lk" onClick=${resetCart}>${confirmReset ? "Tap again to clear" : "Reset cart"}</button>`}</header>
+        ${lines.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🛒</div><p>Your cart is empty.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<div>
+          <ul>${lines.map(l => rowFor(l, l.q))}</ul>
+          ${(sub < minOrder || fee > 0) && h`<div class=${"nudge" + (sub < minOrder ? " need" : "")} role="status">
+            <div class="nt"><span class="ni" aria-hidden="true">${sub < minOrder ? "🛒" : "🚚"}</span><span>${sub < minOrder ? h`Add <b>₹${minOrder - sub}</b> more to reach the <b>₹${minOrder}</b> minimum order` : h`Add <b>₹${CFG.freeAbove - sub}</b> more for <b>free delivery</b>`}</span></div>
+            <div class="np" aria-hidden="true"><i style=${{ width: Math.min(100, Math.round(sub / (sub < minOrder ? minOrder : CFG.freeAbove) * 100)) + "%" }}></i></div>
+          </div>`}
+          ${sub >= minOrder && fee === 0 && h`<div class="nudge ok" role="status"><div class="nt"><span class="ni" aria-hidden="true">🎉</span><span><b>Free delivery</b> on this order</span></div></div>`}
+          <div class="sum">
+            <div><span>Total weight</span><span>${kgR} kg</span></div>
+            <div><span>Items</span><span>₹${sub}</span></div>
+            ${save > 0 && h`<div class="good"><span>You save vs local prices</span><span>₹${save}</span></div>`}
+            <div><span>Delivery</span><span>${fee === 0 ? "Free" : "₹" + fee}</span></div>
+            <div class="t"><span>Total</span><span>₹${total}</span></div>
+          </div>
+          ${addrOk ? h`<div>
+            <div class="oc" style=${{ marginBottom: 12 }}><div class="top"><div><b>Deliver to</b><p>${addr}</p>${profile.det && h`<p>${profile.det}</p>`}${soc && soc.drop && h`<p>Drop point: ${soc.drop}</p>`}</div><button class="lk" onClick=${() => setEditAddr(true)}>Change</button></div></div>
+            <label>Your name<input value=${profile.name || ""} onInput=${setName} autocomplete="name" /></label>
+            <label>Phone (optional)<input value=${f.phone} onInput=${set("phone")} inputmode="tel" autocomplete="tel" /></label>
+            <label>Note (optional)<textarea rows="2" value=${f.note} onInput=${set("note")}></textarea></label>
+          </div>` : h`<div class="oc" style=${{ marginBottom: 12 }}><${AddressSetup} inline=${true} mobile=${mobile} profile=${profile} link=${linkSoc} onSave=${onProfile} /></div>`}
+          ${!addrOk && h`<p class="note">Choose your delivery society above to place the order.</p>`}
+          <button class="cta" style=${{ width: "100%" }} disabled=${!ready} onClick=${send}>Send order on WhatsApp</button>
+        </div>`}
+      </div>`}
+
+      ${tab === "orders" && h`<div>
+        <header><h1>Order history</h1></header>
+        ${notice && h`<div class="banner"><span>✅</span><span>${notice}</span></div>`}
+        ${orders.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🧾</div><p>No orders yet.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<ul>
+          ${orders.map(o => h`<li key=${o.id} class="oc">
+            <div class="top"><b>${fmtDate(o.t)}</b><span class="chip">${STAGES[stageIdx(o.status)][1]}</span></div>
+            <div class="trk" aria-hidden="true">${STAGES.map((st, k) => h`<i key=${st[0]} class=${k <= stageIdx(o.status) ? "on" : ""}></i>`)}</div>
+            <div class="trkl" aria-hidden="true">${STAGES.map(st => h`<span key=${st[0]}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
+            ${o.status === "delivered" && o.deliveredBy && o.deliveredBy !== "admin" && h`<p>Delivered by ${(findEmp(o.deliveredBy) || {}).name || "our delivery partner"}${o.deliveredAt ? " · " + fmtDate(o.deliveredAt) : ""}</p>`}
+            <p>${o.lines.map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
+            ${o.soc && h`<p>Deliver to: ${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")}</p>`}
+            ${o.status !== "delivered" && o.otp && h`<div class="dcode"><span>Delivery code</span><b>${o.otp}</b><small>Tell this code to the delivery person only when you receive your order.</small></div>`}
+            <div class="top"><b>₹${o.total}</b><button class="add" onClick=${() => reorder(o)}>Reorder</button></div>
+          </li>`)}
+        </ul>`}
+        <p class="note" style=${{ marginTop: 14 }}>Order history is saved on this device only.</p>
+      </div>`}
+
+      ${tab === "profile" && h`<div>
+        <header><h1>Profile</h1></header>
+        <div class="oc">
+          <label>Mobile number<input value=${"+91 " + mobile} readOnly /></label>
+          <label>Your name<input value=${profile.name || ""} onInput=${setName} autocomplete="name" /></label>
+          <div class="top"><div><b>Delivery address</b><p>${addr || "Not chosen yet. You will choose it when you review your cart."}</p>${profile.det && h`<p>${profile.det}</p>`}</div><button class="lk" onClick=${() => setEditAddr(true)}>${addr ? "Change" : "Choose"}</button></div>
+          <p class="note" style=${{ margin: 0 }}>Saved on this device and filled in at checkout.</p>
+        </div>
+        <div class="oc" style=${{ marginTop: 12 }}>
+          <label class="pk2" style=${{ margin: 0 }}><input type="checkbox" checked=${geo.consent === "yes"} onChange=${e => setConsent(e.target.checked)} /><span><b>Share my location</b><small>GPS latitude, longitude and pin code, used only to understand where customers are. Turn off any time.</small></span></label>
+          ${geo.consent === "yes" && geo.t && geo.lat != null && h`<p class="note" style=${{ margin: "8px 0 0" }}>Last shared ${fmtDate(geo.t)}${geo.pin ? " · pin code " + geo.pin : ""}.</p>`}
+          ${geoMsg && h`<p class="note" role="status" style=${{ margin: "8px 0 0" }}>${geoMsg}</p>`}
+          ${geo.consent === "yes" && h`<button class="lk" onClick=${doCapture}>Update my location now</button>`}
+        </div>
+        <p style=${{ marginTop: 16 }}><button class="lk" onClick=${() => setTerms(true)}>Terms and Conditions</button>${isAdmin && h` · <a class="lk" href="#admin">Admin</a>`}${orders.length > 0 && h` · <button class="lk" onClick=${clearOrders}>Clear order history</button>`}</p>
+        <button class="ghost" style=${{ width: "100%", marginTop: 8 }} onClick=${onLogout}>Log out</button>
+      </div>`}
+    </div>
+    ${bar}
+    ${editAddr && h`<${AddressSetup} mobile=${mobile} profile=${profile} link=${linkSoc} onCancel=${() => setEditAddr(false)} onSave=${p => { onProfile(p); setEditAddr(false); }} />`}
+    ${viewer && h`<${PhotoViewer} key=${viewer.id} item=${ITEMS.find(x => x.id === viewer.id) || viewer} photos=${photosFor(viewer)} q=${cart[viewer.id] || 0} change=${change} onClose=${() => setViewer(null)} />`}
+    ${terms && h`<${Terms} onClose=${() => setTerms(false)} />`}
+    ${geoAsk && !terms && h`<div class="ov"><div class="sheet" role="dialog" aria-modal="true" aria-label="Share your location">
+      <div class="sh"><h2>Share your location?</h2></div>
+      <p>We would like your phone's GPS location (latitude, longitude) and the pin code of that spot. It helps us see where our customers are and which societies to serve next.</p>
+      <p class="note">It is optional. You can order without it, and you can switch it off any time in Profile. <button class="lk" onClick=${() => { setGeoAsk(false); setTerms(true); }}>Read the terms</button></p>
+      <button class="cta" style=${{ width: "100%" }} onClick=${() => setConsent(true)}>Allow location</button>
+      <button class="ghost" style=${{ width: "100%", marginTop: 8 }} onClick=${() => setConsent(false)}>Not now</button>
+    </div></div>`}
+    <${NavBar} tab=${tab} go=${go} count=${lines.length} />
+  </div>`;
+}
+
+// ---- Login with mobile number and OTP ----
+const SK = "wfb_session";
+function loadSession() {
+  try { const o = JSON.parse(localStorage.getItem(SK) || "null"); if (o && o.mobile && Date.now() - o.t < 30 * 864e5) return o.mobile; } catch (e) {}
+  return "";
+}
+function saveSession(m) { try { localStorage.setItem(SK, JSON.stringify({ mobile: m, t: Date.now() })); } catch (e) {} }
+function clearSession() { try { localStorage.removeItem(SK); } catch (e) {} }
+
+const demoState = { code: "", exp: 0 };
+async function sendOtp(mobile) {
+  if (CFG.demoOtp) {
+    demoState.code = String(Math.floor(100000 + Math.random() * 900000));
+    demoState.exp = Date.now() + 5 * 60 * 1000;
+    return { ok: true, demo: demoState.code };
+  }
+  const r = await fetch(CFG.api + "/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mobile }) });
+  return { ok: r.ok };
+}
+async function verifyOtp(mobile, otp) {
+  if (CFG.demoOtp) return { ok: Date.now() < demoState.exp && otp === demoState.code };
+  const r = await fetch(CFG.api + "/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mobile, otp }) });
+  const j = await r.json().catch(() => ({}));
+  return { ok: r.ok && j.ok === true };
+}
+
+function Terms({ onClose }) {
+  return h`<div class="ov" onClick=${e => e.target === e.currentTarget && onClose()}>
+    <div class="sheet terms" role="dialog" aria-modal="true" aria-label="Terms and conditions">
+      <div class="sh"><h2>Terms and conditions</h2><button class="x" aria-label="Close" onClick=${onClose}>×</button></div>
+      <p class="note">Sample text. Replace it with your own terms and have them reviewed before launch.</p>
+      <h3>Orders and delivery</h3><p>Orders close at the stated cut-off time. We buy to order, so changes after the cut-off may not be possible. Delivery is in the stated slot at the agreed drop point.</p>
+      <h3>Prices and weight</h3><p>Prices can change with market rates. Fresh produce may vary slightly in weight, and the final bill reflects the quantity delivered.</p>
+      <h3>Quality and refunds</h3><p>Report any quality issue on the day of delivery with a photo. We will replace or refund the affected item.</p>
+      <h3>Usage information</h3><p>To improve the service we record which pages you open, what you search for, when you log in and which society and building you deliver to.</p>
+      <h3>Location (GPS)</h3><p>Sharing your location is optional and happens only if you tap Allow and your browser permits it. If you share it, we collect your device's GPS latitude and longitude (rounded to about 10 metres), the pin code of that spot and the time, together with your mobile number. We use it only to understand where our customers are, plan which societies to serve and improve delivery coverage. We send the coordinates to OpenStreetMap's Nominatim service to look up the pin code. We do not sell your location. You can switch sharing off at any time in Profile, and doing so deletes the location points we hold for you.</p>
+      <h3>Your mobile number</h3><p>We use your number only to log you in, confirm orders, and contact you about deliveries. We do not sell it.</p>
+      <button class="cta" style=${{ width: "100%", marginTop: 16 }} onClick=${onClose}>Close</button>
+    </div>
+  </div>`;
+}
+
+function Login({ onDone }) {
+  const [step, setStep] = useState(0);
+  const [mobile, setMobile] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [terms, setTerms] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [wait, setWait] = useState(0);
+  const [demo, setDemo] = useState("");
+  const [tries, setTries] = useState(0);
+  const valid = /^[6-9]\d{9}$/.test(mobile);
+
+  React.useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait(wait - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
+
+  const send = async () => {
+    setBusy(true); setErr("");
+    try {
+      const r = await sendOtp(mobile);
+      if (!r.ok) throw new Error("send");
+      setDemo(r.demo || ""); setStep(1); setOtp(""); setTries(0); setWait(30);
+    } catch (e) { setErr("Could not send the OTP. Please try again."); }
+    setBusy(false);
+  };
+  const verify = async () => {
+    if (tries >= 5) { setErr("Too many wrong attempts. Please request a new OTP."); return; }
+    setBusy(true); setErr("");
+    try {
+      const r = await verifyOtp(mobile, otp);
+      if (r.ok) { saveSession(mobile); onDone(mobile); return; }
+      track("login_failed", { m: mobile }); setTries(tries + 1); setErr("That OTP is not correct.");
+    } catch (e) { setErr("Could not verify. Please try again."); }
+    setBusy(false);
+  };
+
+  return h`<div class="wrap lg">
+    <div style=${{ fontSize: 44 }} aria-hidden="true">🥬</div>
+    <h1>${CFG.brand}</h1>
+    <p class="sub">Log in with your mobile number to place your weekly order.</p>
+    <div class="lgc">
+      ${step === 0 ? h`<div>
+        <label>Mobile number
+          <div class="ph"><span>+91</span><input value=${mobile} inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number" onInput=${e => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} /></div>
+        </label>
+        ${mobile.length > 0 && !valid && h`<p class="warn">Enter a valid 10-digit Indian mobile number.</p>`}
+        <label class="chk"><input type="checkbox" checked=${agree} onChange=${e => setAgree(e.target.checked)} />
+          <span>I agree to the <button class="lk" onClick=${e => { e.preventDefault(); setTerms(true); }}>Terms and Conditions</button></span></label>
+        ${err && h`<p class="warn">${err}</p>`}
+        <button class="cta" style=${{ width: "100%" }} disabled=${!valid || !agree || busy} onClick=${send}>${busy ? "Sending…" : "Send OTP"}</button>
+      </div>` : h`<div>
+        <p style=${{ margin: "0 0 12px" }}>Enter the 6-digit OTP sent to <b>+91 ${mobile}</b>. <button class="lk" onClick=${() => { setStep(0); setErr(""); }}>Change</button></p>
+        ${demo && h`<p class="demo">Demo mode: no SMS is sent. Your OTP is <b>${demo}</b></p>`}
+        <label>OTP<input class="otp" value=${otp} inputmode="numeric" autocomplete="one-time-code" maxlength="6" onInput=${e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} /></label>
+        ${err && h`<p class="warn">${err}</p>`}
+        <button class="cta" style=${{ width: "100%" }} disabled=${otp.length !== 6 || busy} onClick=${verify}>${busy ? "Checking…" : "Verify and continue"}</button>
+        <p class="note" style=${{ textAlign: "center", marginTop: 12 }}>${wait > 0 ? "Resend OTP in " + wait + "s" : h`<button class="lk" onClick=${send}>Resend OTP</button>`}</p>
+      </div>`}
+    </div>
+    ${terms && h`<${Terms} onClose=${() => setTerms(false)} />`}
+  </div>`;
+}
+
+function AddressSetup({ mobile, profile, link, inline, onSave, onCancel, onLogout }) {
+  const first = (profile.soc && SOCIETIES.find(s => s.id === profile.soc && s.status === "active")) || (link && link.status === "active" ? link : null);
+  const [soc, setSoc] = useState(first || null);
+  const [q, setQ] = useState("");
+  const [area, setArea] = useState("");
+  const [bld, setBld] = useState(first && first.id === profile.soc ? profile.bld || "" : "");
+  const [flat, setFlat] = useState(profile.flat || "");
+  const [det, setDet] = useState(profile.det || "");
+  const [name, setName] = useState(profile.name || "");
+  const [ask, setAsk] = useState(link && link.status !== "active" ? link : null);
+  const [sent, setSent] = useState(false);
+  const areas = [...new Set(SOCIETIES.map(s => s.area))].sort();
+  const lc = t => (t || "").toLowerCase();
+  const term = lc(q.trim());
+  const hits = SOCIETIES.filter(s => (!area || s.area === area) && (!term || [s.name, s.area, s.pincode].concat(s.alias || []).some(x => lc(x).includes(term))))
+    .sort((a, b) => (a.status === "active" ? 0 : 1) - (b.status === "active" ? 0 : 1) || a.name.localeCompare(b.name));
+  const shown = hits.slice(0, 8);
+  const pick = s => { if (s.status === "active") { setSoc(s); setBld(""); } else { setAsk(s); setSent(false); } };
+  const canSave = soc && name.trim() && flat.trim() && (!(soc.buildings || []).length || bld);
+  const notify = () => {
+    const msg = "Please tell me when " + CFG.brand + " starts delivering at " + ask.name + (ask.pincode ? " (" + ask.pincode + ")" : "") + ".\nMy number: +91 " + mobile;
+    try { const L = JSON.parse(localStorage.getItem("wfb_notify") || "[]"); L.push({ nn: ask.name, np: ask.pincode, t: Date.now() }); localStorage.setItem("wfb_notify", JSON.stringify(L)); } catch (e) {}
+    window.open("https://wa.me/" + CFG.wa + "?text=" + encodeURIComponent(msg), "_blank");
+    setSent(true);
+  };
+  const body = h`<div class=${inline ? "" : "wrap"} style=${inline ? null : { paddingTop: 20 }}>
+    ${inline ? h`<b style=${{ fontSize: 18 }}>Where should we deliver?</b>` : h`<h1>Where should we deliver?</h1>`}
+    <p class="sub" style=${{ marginBottom: 12 }}>We deliver only to selected societies for now.</p>
+    ${ask ? h`<div class="lgc" style=${{ marginTop: 0 }}>
+      <b>We are not delivering to ${ask.name} yet.</b>
+      <p class="note">Tap below and we will message you on WhatsApp as soon as delivery starts there.</p>
+      ${sent && h`<p class="note good">Thanks. Your message is ready in WhatsApp. Send it and we will note your request.</p>`}
+      <button class="cta" style=${{ width: "100%" }} onClick=${notify}>Notify me on WhatsApp</button>
+      <p style=${{ marginBottom: 0 }}><button class="lk" onClick=${() => { setAsk(null); setSent(false); }}>Back to the list</button></p>
+    </div>` : !soc ? h`<div>
+      <label>Search your society<input value=${q} placeholder="Type the society name, area or pincode" onInput=${e => setQ(e.target.value)} autoFocus=${!inline} /></label>
+      ${areas.length > 1 && h`<div class="chips" role="group" aria-label="Area">
+        <button class="chp" aria-pressed=${area === ""} onClick=${() => setArea("")}>All areas</button>
+        ${areas.map(a => h`<button key=${a} class="chp" aria-pressed=${area === a} onClick=${() => setArea(area === a ? "" : a)}>${a}</button>`)}
+      </div>`}
+      <ul>${shown.map(s => h`<li key=${s.id}><button class="res" onClick=${() => pick(s)}><span>${s.name}<small>${s.area}${s.pincode ? " · " + s.pincode : ""}</small></span>${s.status !== "active" && h`<span class="soonb">Coming soon</span>`}</button></li>`)}</ul>
+      ${hits.length > shown.length && h`<p class="note">Showing ${shown.length} of ${hits.length}. Type more of the name to narrow down.</p>`}
+      ${hits.length === 0 && h`<p class="note">No society found. We add new societies regularly.</p>`}
+    </div>` : h`<div>
+      <div class="oc"><div class="top"><div><b>${soc.name}</b><p>${soc.area}</p></div><button class="lk" onClick=${() => { setSoc(null); setBld(""); }}>Change</button></div></div>
+      ${(soc.buildings || []).length > 0 && h`<div style=${{ marginTop: 14 }}><b>Building</b>
+        ${soc.buildings.length <= 12
+          ? h`<div class="chips" role="group" aria-label="Building">${soc.buildings.map(b => h`<button key=${b} class="chp" aria-pressed=${bld === b} onClick=${() => setBld(b)}>${b}</button>`)}</div>`
+          : h`<select value=${bld} onChange=${e => setBld(e.target.value)} aria-label="Building" style=${{ width: "100%", padding: 11, margin: "8px 0 14px" }}><option value="">Select building</option>${soc.buildings.map(b => h`<option key=${b} value=${b}>${b}</option>`)}</select>`}
+      </div>`}
+      <label style=${{ marginTop: 14 }}>Flat or floor number<input value=${flat} placeholder="e.g. 1204" onInput=${e => setFlat(e.target.value)} /></label>
+      <label>More address details (optional)<textarea rows="2" value=${det} placeholder="Wing, landmark, delivery instructions" onInput=${e => setDet(e.target.value)}></textarea></label>
+      <label>Your name<input value=${name} autocomplete="name" onInput=${e => setName(e.target.value)} /></label>
+      ${soc.day && h`<p class="note">Delivery: ${soc.day}${soc.drop ? ". Drop point: " + soc.drop : ""}.</p>`}
+      <button class="cta" style=${{ width: "100%" }} disabled=${!canSave} onClick=${() => onSave({ ...profile, name: name.trim(), soc: soc.id, bld, flat: flat.trim(), det: det.trim() })}>${inline ? "Save address" : "Save and continue"}</button>
+    </div>`}
+    ${onCancel && h`<p><button class="lk" onClick=${onCancel}>Cancel</button></p>`}
+    ${onLogout && h`<p class="note">Logged in as +91 ${mobile} · <button class="lk" onClick=${onLogout}>Log out</button></p>`}
+  </div>`;
+  return onCancel ? h`<div class="addr">${body}</div>` : body;
+}
+
+// ---- Delivery team (testing: stored in this browser; a backend will replace this later) ----
+const EMPK = "wfb_employees";
+const loadEmps = () => lsGet(EMPK, []);
+const findEmp = m => loadEmps().find(e => e.mobile === m) || null;
+function newOtp() {
+  try { const a = new Uint32Array(1); crypto.getRandomValues(a); return String(1000 + (a[0] % 9000)); }
+  catch (e) { return String(1000 + Math.floor(Math.random() * 9000)); }
+}
+function eachOrderKey(fn) {
+  const keys = [];
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("wfb_orders_")) keys.push(k); } } catch (e) {}
+  keys.forEach(fn);
+}
+// Change one order wherever it is stored
+function patchOrder(id, fn) {
+  eachOrderKey(k => {
+    const list = lsGet(k, []);
+    if (list.some(o => o.id === id)) lsSet(k, list.map(o => o.id === id ? fn(o) : o));
+  });
+}
+function allRawOrders() {
+  const out = [];
+  eachOrderKey(k => lsGet(k, []).forEach(o => out.push({ ...o, _m: k.slice(11) })));
+  return out;
+}
+// Audit trail: append-only list of what happened and who did it (kept in this browser for testing)
+const AUK = "wfb_audit";
+function audit(type, d) {
+  const l = lsGet(AUK, []); l.push({ t: Date.now(), type, ...d });
+  lsSet(AUK, l.slice(-3000));
+}
+const orderTag = o => ({ order: o.id, where: [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "", total: o.total });
+const STAGES = [["placed", "Placed"], ["packed", "Packed"], ["out", "Out for delivery"], ["delivered", "Delivered"]];
+const stageIdx = st => Math.max(0, STAGES.findIndex(x => x[0] === (st || "placed")));
+function setStage(o, st, by) {
+  patchOrder(o.id, x => ({ ...x, status: st }));
+  audit("status", { ...orderTag(o), status: st, emp: o.assignedTo || "", by });
+}
+const isOpen = o => (o.status || "placed") !== "delivered";
+// Auto assignment: employees who cover the society come first; the one with the fewest open orders gets the next order.
+function pickEmployee(socName) {
+  const act = loadEmps().filter(e => e.active);
+  if (!act.length) return "";
+  const nm = String(socName || "").toLowerCase();
+  const cover = act.filter(e => nm && (e.socs || []).some(x => { x = String(x).toLowerCase().trim(); return x && (nm.includes(x) || x.includes(nm)); }));
+  const pool = cover.length ? cover : act;
+  const load = {};
+  allRawOrders().filter(isOpen).forEach(o => { if (o.assignedTo) load[o.assignedTo] = (load[o.assignedTo] || 0) + 1; });
+  return pool.slice().sort((a, b) => (load[a.mobile] || 0) - (load[b.mobile] || 0))[0].mobile;
+}
+// Give every open order without a (still active) employee to someone
+function assignOpenOrders() {
+  const act = new Set(loadEmps().filter(e => e.active).map(e => e.mobile));
+  allRawOrders().filter(o => isOpen(o) && !act.has(o.assignedTo)).forEach(o => {
+    const e = pickEmployee(o.soc);
+    if (e) { patchOrder(o.id, x => ({ ...x, assignedTo: e })); audit("assigned", { ...orderTag(o), emp: e, from: o.assignedTo || "", by: "auto" }); }
+  });
+}
+// Old orders placed before delivery codes existed get one
+function migrateOrders() {
+  allRawOrders().filter(o => isOpen(o) && !o.otp).forEach(o => patchOrder(o.id, x => ({ ...x, otp: newOtp() })));
+}
+// Returns "" on success or an error message
+function completeDelivery(id, code, empMobile) {
+  const o = allRawOrders().find(x => x.id === id);
+  if (!o) return "Order not found.";
+  if (!isOpen(o)) return "This order is already delivered.";
+  if (o.lockUntil && o.lockUntil > Date.now()) return "Too many wrong codes. Try again in a few minutes.";
+  if (o.assignedTo && o.assignedTo !== empMobile) audit("taken_over", { ...orderTag(o), emp: empMobile, from: o.assignedTo, by: empMobile });
+  if (String(code).trim() !== String(o.otp)) {
+    const tries = (o.tries || 0) + 1;
+    patchOrder(id, x => ({ ...x, tries: tries >= 5 ? 0 : tries, lockUntil: tries >= 5 ? Date.now() + 5 * 60 * 1000 : 0 }));
+    audit(tries >= 5 ? "locked" : "wrong_code", { ...orderTag(o), emp: empMobile, by: empMobile });
+    return tries >= 5 ? "Too many wrong codes. Locked for 5 minutes." : "That code is not correct. Ask the customer again.";
+  }
+  patchOrder(id, x => ({ ...x, status: "delivered", deliveredAt: Date.now(), deliveredBy: empMobile, tries: 0, lockUntil: 0 }));
+  audit("delivered", { ...orderTag(o), emp: empMobile, by: empMobile, codeOk: true, customer: o.phone || o._m });
+  return "";
+}
+
+function Deliveries({ emp, onLogout }) {
+  const [tab, setTab] = useState("pending");
+  const [ver, setVer] = useState(0);
+  const [open, setOpen] = useState(null);
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  React.useEffect(() => {
+    const f = () => setVer(v => v + 1);
+    window.addEventListener("storage", f);
+    const t = setInterval(f, 8000);
+    return () => { window.removeEventListener("storage", f); clearInterval(t); };
+  }, []);
+  void ver;
+  const cur = findEmp(emp.mobile);
+  if (!cur || !cur.active) return h`<div class="wrap lg"><h1>Account deactivated</h1><p class="sub">Please contact the admin.</p><button class="ghost" onClick=${onLogout}>Log out</button></div>`;
+  const all = allRawOrders();
+  const mine = all.filter(o => isOpen(o) && o.assignedTo === emp.mobile).sort((a, b) => (a.soc || "").localeCompare(b.soc || "") || (a.unit || "").localeCompare(b.unit || ""));
+  const free = all.filter(o => isOpen(o) && !o.assignedTo);
+  const done = all.filter(o => !isOpen(o) && o.deliveredBy === emp.mobile).sort((a, b) => (b.deliveredAt || 0) - (a.deliveredAt || 0));
+  const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+  const doneToday = done.filter(o => (o.deliveredAt || 0) >= dayStart.getTime());
+  const take = o => { patchOrder(o.id, x => ({ ...x, assignedTo: emp.mobile })); audit("assigned", { ...orderTag(o), emp: emp.mobile, by: emp.mobile, claimed: true }); setVer(v => v + 1); };
+  const submit = o => {
+    if (!/^\d{4}$/.test(code)) { setErr("Enter the 4-digit code."); return; }
+    const e = completeDelivery(o.id, code, emp.mobile);
+    setErr(e);
+    if (!e) { setOpen(null); setCode(""); setVer(v => v + 1); }
+  };
+  const addr = o => [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "Address not given";
+  const card = (o, isFree) => h`<li key=${o.id} class="oc">
+    <div class="top"><b>${addr(o)}</b><span class="chip">₹${o.total}</span></div>
+    <p class="note" style=${{ margin: "0 0 4px" }}>${STAGES[stageIdx(o.status)][1]}</p>
+    <p>${o.name || "Customer"}${o.det ? " · " + o.det : ""}</p>
+    ${o.phone && h`<p><a class="lk" href=${"tel:" + o.phone}>Call ${o.phone}</a></p>`}
+    <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
+    ${isFree ? h`<button class="ghost" onClick=${() => take(o)}>Take this order</button>` : open === o.id ? h`<div class="otp">
+      <label>Code from the customer<input inputMode="numeric" maxLength="4" placeholder="4-digit code" value=${code} onInput=${e => { setCode(e.target.value.replace(/\D/g, "").slice(0, 4)); setErr(""); }} /></label>
+      ${err && h`<p class="err" role="alert">${err}</p>`}
+      <div style=${{ display: "flex", gap: 10 }}><button class="cta" onClick=${() => submit(o)}>Confirm delivery</button><button class="ghost" onClick=${() => { setOpen(null); setCode(""); setErr(""); }}>Cancel</button></div>
+    </div>` : h`<div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      ${o.status !== "out" && h`<button class="ghost" onClick=${() => { setStage(o, "out", emp.mobile); setVer(v => v + 1); }}>Start delivery</button>`}
+      <button class="cta" onClick=${() => { setOpen(o.id); setCode(""); setErr(""); }}>Complete delivery</button></div>`}
+  </li>`;
+  return h`<div class="wrap">
+    <header><h1>My deliveries</h1><p class="sub">${cur.name} · +91 ${cur.mobile}</p></header>
+    <div class="sm">
+      <div><b>${mine.length}</b><span>to deliver</span></div>
+      <div><b>${doneToday.length}</b><span>delivered today</span></div>
+      <div><b>₹${doneToday.reduce((s2, o) => s2 + (+o.total || 0), 0)}</b><span>order value today</span></div>
+    </div>
+    <div class="tabs" role="group" aria-label="Deliveries">
+      <button class="tab" aria-pressed=${tab === "pending"} onClick=${() => setTab("pending")}>Pending (${mine.length})</button>
+      <button class="tab" aria-pressed=${tab === "done"} onClick=${() => setTab("done")}>Delivered (${done.length})</button>
+    </div>
+    ${tab === "pending" ? h`<div>
+      ${mine.length === 0 && h`<p class="note">No pending deliveries assigned to you.</p>`}
+      <ul>${mine.map(o => card(o, false))}</ul>
+      ${free.length > 0 && h`<h2>Not assigned to anyone (${free.length})</h2><ul>${free.map(o => card(o, true))}</ul>`}
+    </div>` : h`<div>
+      ${done.length === 0 && h`<p class="note">You have not delivered any orders yet.</p>`}
+      <ul>${done.map(o => h`<li key=${o.id} class="oc">
+        <div class="top"><b>${addr(o)}</b><span class="chip">Delivered</span></div>
+        <p>${o.name || "Customer"} · ₹${o.total}</p>
+        <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
+        <p class="note" style=${{ margin: 0 }}>${o.deliveredAt ? fmtDate(o.deliveredAt) : ""}</p>
+      </li>`)}</ul>
+    </div>`}
+    <div style=${{ display: "flex", gap: 10, margin: "14px 0" }}><button class="ghost" onClick=${() => setVer(v => v + 1)}>Refresh</button><button class="ghost" onClick=${onLogout}>Log out</button></div>
+  </div>`;
+}
+
+// Pages an employee can be given. "del" is the delivery list; the others reuse the admin screens.
+const PAGES = [
+  ["del", "My deliveries", "Their own pending and delivered orders, with code entry"],
+  ["stock", "Stock and orders", "Buying list, stock summary and packing list for all orders"],
+  ["price", "Price check", "Compare your prices with local prices"],
+  ["cat", "Catalogue", "View and edit items and prices"],
+  ["soc", "Societies", "View and edit delivery societies"],
+  ["ins", "Insights", "Visits, searches, logins and customers' locations. Shows customers' mobile numbers, so give it only to people you trust"],
+  ["calc", "Profit calculator", "Shows margins and costs. Give this only to people you trust with that"]
+];
+const pagesOf = e => { const p = (e && e.pages || []).filter(k => PAGES.some(x => x[0] === k)); return p.length ? p : ["del"]; };
+function PageChecks({ val, onChange }) {
+  return h`<div class="pgs" role="group" aria-label="Pages this employee can open">${PAGES.map(([k, l, d]) => h`<label key=${k} class="pk2"><input type="checkbox" checked=${val.includes(k)} onChange=${ev => onChange(ev.target.checked ? PAGES.map(x => x[0]).filter(x => x === k || val.includes(x)) : val.filter(x => x !== k))} /><span><b>${l}</b><small>${d}</small></span></label>`)}</div>`;
+}
+function EmployeeApp({ emp, onLogout }) {
+  const [pg, setPg] = useState("");
+  const [ver, setVer] = useState(0);
+  React.useEffect(() => {
+    const f = () => setVer(v => v + 1);
+    window.addEventListener("storage", f);
+    const t = setInterval(f, 8000);
+    return () => { window.removeEventListener("storage", f); clearInterval(t); };
+  }, []);
+  void ver;
+  const cur = findEmp(emp.mobile);
+  if (!cur || !cur.active) return h`<div class="wrap lg"><h1>Account deactivated</h1><p class="sub">Please contact the admin.</p><button class="ghost" onClick=${onLogout}>Log out</button></div>`;
+  const pages = pagesOf(cur);
+  const now = pages.includes(pg) ? pg : pages[0];
+  const label = k => PAGES.find(x => x[0] === k)[1];
+  return h`<div>
+    ${pages.length > 1 && h`<div class="wrap"><div class="tabs top" role="group" aria-label="Pages">${pages.map(k => h`<button key=${k} class="tab" aria-pressed=${now === k} onClick=${() => setPg(k)}>${label(k)}</button>`)}</div></div>`}
+    ${now === "del" ? h`<${Deliveries} emp=${cur} onLogout=${onLogout} />` : h`<div>
+      ${now === "stock" ? h`<${Admin} staff=${true} />` : now === "price" ? h`<${PriceCheck} />` : now === "cat" ? h`<${Catalogue} />` : now === "soc" ? h`<${SocietiesAdmin} />` : now === "ins" ? h`<${Insights} />` : h`<${Calc} />`}
+      <div class="wrap"><p class="note" style=${{ marginTop: 20 }}>${cur.name} · +91 ${cur.mobile} · <button class="lk" onClick=${onLogout}>Log out</button></p></div>
+    </div>`}
+  </div>`;
+}
+
+function Gate({ link }) {
+  const [m, setM] = useState(loadSession());
+  const [prof, setProf] = useState(() => lsGet("wfb_profile_" + loadSession(), {}));
+  const logout = () => { track("logout"); clearSession(); setM(""); };
+  if (!m) return h`<${Login} onDone=${mm => { setM(mm); setProf(lsGet("wfb_profile_" + mm, {})); track("login", { m: mm, soc: (lsGet("wfb_profile_" + mm, {})).soc || "" }); }} />`;
+  const save = p => { if (p.soc !== prof.soc || p.bld !== prof.bld) track("address", { society: p.soc, building: p.bld || "", soc: p.soc || "" }); lsSet("wfb_profile_" + m, p); setProf(p); };
+  const emp = findEmp(m);
+  if (emp && !ADMIN_MOBILES.includes(m)) return emp.active ? h`<${EmployeeApp} emp=${emp} onLogout=${logout} />` : h`<div class="wrap lg">
+    <h1>Account deactivated</h1>
+    <p class="sub">+91 ${m} is no longer active on the delivery team. Please contact the admin.</p>
+    <button class="ghost" onClick=${logout}>Log out</button>
+  </div>`;
+  return h`<${App} mobile=${m} isAdmin=${ADMIN_MOBILES.includes(m)} profile=${prof} onProfile=${save} onLogout=${logout} link=${link} />`;
+}
+
+// ---- Buying list (open this page with #admin at the end of the link) ----
+const kgOf = (n, u, q) => {
+  if (/^kg$/i.test(u)) return q;
+  const it = ITEMS.find(x => x.n === n);
+  return it && it.w ? q * it.w : null;
+};
+const fk = x => (Math.round(x * 10) / 10) + " kg";
+function parse(text) {
+  const seen = new Set();
+  let dups = 0;
+  const out = text.split(/New order:/i).slice(1).map(b => {
+    const key = b.replace(/\s+/g, " ").trim().toLowerCase();
+    if (seen.has(key)) { dups++; return null; }
+    seen.add(key);
+    const g = k => { const m = b.match(new RegExp("^" + k + ":\\s*(.*)$", "mi")); return m ? m[1].trim() : ""; };
+    const num = re => { const m = b.match(re); return m ? +m[1] : null; };
+    const items = [];
+    b.split("\n").forEach(l => {
+      const m = l.match(/^[•\-*]\s*(.+?):\s*(\d+)\s*[×x]\s*(.+?)\s*=\s*₹\s*(\d+)/);
+      if (m) items.push({ n: m[1].trim(), q: +m[2], u: m[3].trim(), amt: +m[4] });
+    });
+    const sub = items.reduce((s, i) => s + i.amt, 0);
+    const fee = num(/^Delivery:\s*₹\s*(\d+)/mi) || 0;
+    const tot = num(/^Total:\s*₹\s*(\d+)/mi);
+    const kgMsg = num(/^Total weight:\s*([\d.]+)\s*kg/mi);
+    return { name: g("Name"), soc: g("Society"), flat: g("Address") || g("Flat"), det: g("Details"), phone: g("Phone"), items, sub, fee, total: tot !== null ? tot : sub + fee, kg: kgMsg !== null ? kgMsg : items.reduce((s, i) => s + (kgOf(i.n, i.u, i.q) || 0), 0) };
+  }).filter(o => o && o.items.length);
+  out.dups = dups;
+  return out;
+}
+const idx = n => { const i = ITEMS.findIndex(x => x.n === n); return i < 0 ? 999 : i; };
+function summarize(list) {
+  const m = {};
+  list.forEach(o => o.items.forEach(i => {
+    const k = i.n + "|" + i.u, a = m[k] || (m[k] = { n: i.n, u: i.u, q: 0, amt: 0, kg: 0, known: true });
+    a.q += i.q; a.amt += i.amt;
+    const kk = kgOf(i.n, i.u, i.q);
+    if (kk === null) a.known = false; else a.kg += kk;
+  }));
+  const sum = f => list.reduce((s, o) => s + o[f], 0);
+  return { rows: Object.values(m).sort((a, b) => idx(a.n) - idx(b.n)), n: list.length, kg: sum("kg"), sub: sum("sub"), fee: sum("fee"), total: sum("total") };
+}
+const qtyText = a => a.q + " " + a.u + (!/^kg$/i.test(a.u) && a.known ? " (~" + fk(a.kg) + ")" : "");
+function SumRows({ s }) {
+  return h`<div>
+    ${s.rows.map(a => h`<div key=${a.n + "|" + a.u} class="sr"><span>${(ITEMS.find(x => x.n === a.n) || {}).e || "•"} ${a.n}</span><span><b>${a.q} ${a.u}</b>${!/^kg$/i.test(a.u) && a.known && h` <small>(~${fk(a.kg)})</small>`}</span><span>₹${a.amt}</span></div>`)}
+    <div class="sr tot"><span>Total</span><span>${fk(s.kg)}</span><span>₹${s.sub}</span></div>
+  </div>`;
+}
+
+// Orders placed on this device are kept in localStorage (testing). A backend will replace this later.
+function loadStoredOrders() {
+  const out = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith("wfb_orders_")) continue;
+      const mobile = k.slice(11);
+      lsGet(k, []).forEach(o => {
+        const items = (o.lines || []).map(l => ({ n: l.n, q: l.q, u: l.u, amt: l.q * l.p }));
+        if (!items.length) return;
+        const sub = o.sub != null ? o.sub : items.reduce((s, x) => s + x.amt, 0), fee = o.fee || 0;
+        out.push({
+          id: o.id, mobile, t: o.t, assignedTo: o.assignedTo || "", deliveredBy: o.deliveredBy || "", status: o.status || "placed", name: o.name || "", soc: o.soc || "",
+          flat: [o.unit, o.bld].filter(Boolean).join(", ") || o.flat || "", det: o.det || "", phone: o.phone || mobile,
+          items, sub, fee, total: o.total != null ? o.total : sub + fee,
+          kg: o.kg != null ? o.kg : items.reduce((s, x) => s + (kgOf(x.n, x.u, x.q) || 0), 0)
+        });
+      });
+    }
+  } catch (e) {}
+  return out;
+}
+
+function Admin({ staff }) {
+  const [txt, setTxt] = useState("");
+  const [w, setW] = useState(5);
+  const [rates, setRates] = useState({});
+  const [copied, setCopied] = useState(false);
+  const [src, setSrc] = useState("pending");
+  const [ver, setVer] = useState(0);
+  const [confirmDel, setConfirmDel] = useState(false);
+  React.useEffect(() => {
+    const f = () => setVer(v => v + 1);
+    window.addEventListener("storage", f);
+    return () => window.removeEventListener("storage", f);
+  }, []);
+  void ver;
+  const stored = loadStoredOrders();
+  const pending = stored.filter(o => o.status !== "delivered");
+  const parsed = parse(txt);
+  const orders = Object.assign((src === "pending" ? pending : stored).concat(parsed), { dups: parsed.dups });
+  const markPacked = () => {
+    allRawOrders().filter(o => isOpen(o) && stageIdx(o.status) < 1).forEach(o => setStage(o, "packed", "admin"));
+    setVer(v => v + 1);
+  };
+  const markDelivered = () => {
+    if (!confirmDel) { setConfirmDel(true); setTimeout(() => setConfirmDel(false), 3000); return; }
+    [...new Set(pending.map(o => o.mobile))].forEach(m => {
+      const k = "wfb_orders_" + m;
+      lsSet(k, lsGet(k, []).map(o => (o.status || "placed") === "delivered" ? o : { ...o, status: "delivered", deliveredAt: Date.now(), deliveredBy: "admin" }));
+    });
+    pending.forEach(o => audit("delivered", { ...orderTag(o), emp: "admin", by: "admin", codeOk: false, note: "Marked by admin without code" }));
+    setConfirmDel(false); setVer(v => v + 1);
+  };
+  const sorted = orders.slice().sort((a, b) => (a.soc || "").localeCompare(b.soc || "") || (a.flat || "").localeCompare(b.flat || ""));
+  const bySoc = [...new Set(sorted.map(o => o.soc || "Society not given"))].map(n => ({ name: n, list: sorted.filter(o => (o.soc || "Society not given") === n) }));
+  const all = summarize(orders);
+  const socSums = bySoc.map(g => ({ name: g.name, s: summarize(g.list) }));
+  const summaryText = () => ["ALL SOCIETIES: " + all.n + (all.n === 1 ? " order, " : " orders, ") + fk(all.kg) + ", items ₹" + all.sub].concat(all.rows.map(a => a.n + ": " + qtyText(a) + " = ₹" + a.amt))
+    .concat(socSums.map(x => "\n" + x.name.toUpperCase() + ": " + x.s.n + (x.s.n === 1 ? " order, " : " orders, ") + fk(x.s.kg) + ", items ₹" + x.s.sub + "\n" + x.s.rows.map(a => a.n + ": " + qtyText(a) + " = ₹" + a.amt).join("\n"))).join("\n");
+  const [copiedS, setCopiedS] = useState(false);
+  const copyS = () => { try { navigator.clipboard.writeText(summaryText()).then(() => setCopiedS(true)); } catch (e) { setCopiedS(false); } };
+  const agg = {};
+  orders.forEach(o => o.items.forEach(i => {
+    const k = i.n + "|" + i.u;
+    const a = agg[k] || (agg[k] = { n: i.n, u: i.u, q: 0, amt: 0 });
+    a.q += i.q; a.amt += i.amt;
+  }));
+  const list = Object.keys(agg).map(k => ({ k, ...agg[k], buy: Math.ceil(agg[k].q * (1 + w / 100)) })).sort((a, b) => idx(a.n) - idx(b.n));
+  const rev = list.reduce((s, l) => s + l.amt, 0);
+  const cost = list.reduce((s, l) => s + (+rates[l.k] || 0) * l.buy, 0);
+  const allRated = list.length > 0 && list.every(l => +rates[l.k] > 0);
+  const out = list.map(l => l.n + ": " + l.buy + " " + l.u + " (ordered " + l.q + ")").join("\n");
+  const copy = () => {
+    try { navigator.clipboard.writeText(out).then(() => setCopied(true)); } catch (e) { setCopied(false); }
+  };
+  return h`<div class="wrap adm">
+    <header><h1>Stock and orders</h1><p class="sub"><a href="#">Back to order page</a></p></header>
+    <div class="tabs" role="group" aria-label="Which orders">
+      <button class="tab" aria-pressed=${src === "pending"} onClick=${() => setSrc("pending")}>Pending delivery (${pending.length})</button>
+      <button class="tab" aria-pressed=${src === "all"} onClick=${() => setSrc("all")}>All orders (${stored.length})</button>
+    </div>
+    <p class="note">Showing orders placed in this browser, read straight from the app. Orders from other phones will appear here once the backend is connected.</p>
+    <div style=${{ display: "flex", gap: 10, flexWrap: "wrap", margin: "10px 0 14px" }}>
+      <button class="ghost" onClick=${() => setVer(v => v + 1)}>Refresh</button>
+      <button class="ghost" disabled=${pending.filter(o => stageIdx(o.status) < 1).length === 0} onClick=${markPacked}>Mark all as packed</button>
+      ${!staff && h`<button class="ghost" disabled=${pending.length === 0} onClick=${markDelivered}>${confirmDel ? "Tap again to confirm" : "Mark pending orders as delivered"}</button>`}
+    </div>
+    <details class="sd"><summary>Add orders pasted from WhatsApp (optional)</summary>
+      <textarea value=${txt} onInput=${e => { setTxt(e.target.value); setCopied(false); }} placeholder="New order: Farm Fresh Box..."></textarea>
+    </details>
+    <label>Extra to buy for wastage (%)<input type="number" min="0" max="30" value=${w} onInput=${e => setW(Math.max(0, +e.target.value || 0))} /></label>
+    ${orders.length === 0 ? h`<p class="note">${src === "pending" ? "No pending orders yet. Orders placed in the app will appear here automatically." : "No orders yet."}</p>` : h`<div>
+      <div class="sm">
+        <div><b>${orders.length}</b><span>orders</span></div>
+        <div><b>₹${rev}</b><span>sales (items)</span></div>
+        <div><b>${allRated ? "₹" + (rev - cost) : "–"}</b><span>margin before delivery</span></div>
+      </div>
+      ${orders.dups > 0 && h`<p class="note">${orders.dups} identical order${orders.dups > 1 ? "s" : ""} pasted more than once ${orders.dups > 1 ? "were" : "was"} counted once.</p>`}
+      <h2>Stock summary: all societies</h2>
+      <p class="note">${all.n} order${all.n > 1 ? "s" : ""} · ${fk(all.kg)} · items ₹${all.sub} · delivery fees ₹${all.fee} · orders total ₹${all.total}</p>
+      <${SumRows} s=${all} />
+      <h2>Society-wise summary</h2>
+      ${socSums.map(x => h`<details key=${x.name} class="sd"><summary>${x.name} · ${x.s.n} order${x.s.n > 1 ? "s" : ""} · ${fk(x.s.kg)} · ₹${x.s.sub}</summary><${SumRows} s=${x.s} /></details>`)}
+      <button class="cta" style=${{ marginTop: 6 }} onClick=${copyS}>${copiedS ? "Copied" : "Copy this summary"}</button>
+      <h2>What to buy at APMC</h2>
+      <ul>${list.map(l => h`<li key=${l.k} class="br">
+        <div><b>${(ITEMS.find(x => x.n === l.n) || {}).e || "•"} ${l.n}</b><div class="note" style=${{ margin: 0 }}>Ordered ${l.q} ${l.u}</div></div>
+        <div><b>${l.buy}</b> <span class="note">${l.u}</span></div>
+        <input type="number" min="0" placeholder="₹ rate" aria-label=${"APMC rate for " + l.n} value=${rates[l.k] || ""} onInput=${e => setRates({ ...rates, [l.k]: e.target.value })} />
+      </li>`)}</ul>
+      <p class="note" style=${{ marginTop: 10 }}>Enter your actual APMC rate per unit in the boxes to see margin. Delivery cost and transport are not included.</p>
+      <h2>Copy the buying list</h2>
+      <textarea readOnly value=${out} style=${{ minHeight: 120 }}></textarea>
+      <button class="cta" onClick=${copy}>${copied ? "Copied" : "Copy list"}</button>
+      <h2>Packing list by flat</h2>
+      <ul>${sorted.map((o, i) => h`<li key=${i} class="pk">${(i === 0 || sorted[i - 1].soc !== o.soc) && h`<p style=${{ margin: "0 0 4px", color: "var(--leaf)", fontWeight: 700 }}>${o.soc || "Society not given"}</p>`}<b>${o.flat || "Flat not given"}</b> · ${o.name}${o.phone ? " · " + o.phone : ""}${o.det ? " · " + o.det : ""}
+        ${o.items.map((it, j) => h`<p key=${j}>${it.n}: ${it.q} × ${it.u}</p>`)}</li>`)}</ul>
+    </div>`}
+  </div>`;
+}
+
+// ---- Profit calculator ----
+const inr = x => (x < 0 ? "-" : "") + "₹" + Math.abs(Math.round(x)).toLocaleString("en-IN");
+
+function Calc() {
+  const [v, setV] = useState({ apmc: 100, app: 200, sell: 150, kg: 7, orders: 40, del: 1, waste: 10, veh: 3000, lab: 2000, per: 25, fee: CFG.fee, share: 50 });
+  const n = k => +v[k] || 0;
+  const calc = o => {
+    const sold = o * n("kg"), bought = sold * (1 + n("waste") / 100);
+    const rev = sold * n("sell") + o * n("share") / 100 * n("fee");
+    return { rev, profit: rev - bought * n("apmc") - n("veh") - n("lab") - o * n("per") };
+  };
+  const r = calc(n("orders"));
+  const weekly = r.profit * n("del"), monthly = weekly * 4.3;
+  const margin = r.rev > 0 ? r.profit / r.rev * 100 : 0;
+  const contrib = n("kg") * (n("sell") - n("apmc") * (1 + n("waste") / 100)) - n("per") + n("share") / 100 * n("fee");
+  const be = contrib > 0 ? Math.ceil((n("veh") + n("lab")) / contrib) : null;
+  const basket = n("kg") * n("sell");
+  const below = n("app") > 0 ? (n("app") - n("sell")) / n("app") * 100 : 0;
+  let vd, cls = "good";
+  if (r.profit <= 0) { vd = "Loss-making at these numbers."; cls = "bad"; }
+  else if (margin < 8) { vd = "Marginal. There is very little room for mistakes."; cls = "bad"; }
+  else if (margin < 15) { vd = "Workable. Test it with a small pilot first."; }
+  else { vd = "Looks worthwhile if demand and prices hold."; }
+  const fld = (k, label) => h`<label>${label}<input type="number" inputmode="decimal" min="0" value=${v[k]} onInput=${e => setV({ ...v, [k]: e.target.value })} /></label>`;
+  return h`<div class="wrap adm">
+    <header><h1>Profit calculator</h1><p class="sub">Enter your real prices and costs. All figures are per delivery unless noted.</p></header>
+    <div class="fg">
+      ${fld("apmc", "APMC price you pay (₹/kg)")}
+      ${fld("app", "App or market price (₹/kg)")}
+      ${fld("sell", "Your selling price (₹/kg)")}
+      ${fld("kg", "Average kg per order")}
+      ${fld("orders", "Orders per delivery")}
+      ${fld("del", "Deliveries per week")}
+      ${fld("waste", "Extra bought for wastage (%)")}
+      ${fld("veh", "Vehicle, fuel and tolls per trip (₹)")}
+      ${fld("lab", "Helper or labour per trip (₹)")}
+      ${fld("per", "Packing and payment per order (₹)")}
+      ${fld("fee", "Delivery fee you charge (₹)")}
+      ${fld("share", "Orders paying the fee (%)")}
+    </div>
+    <div class="sm sm2">
+      <div><b class=${cls}>${inr(weekly)}</b><span>profit per week</span></div>
+      <div><b class=${cls}>${inr(monthly)}</b><span>profit per month</span></div>
+      <div><b>${margin.toFixed(1)}%</b><span>net margin</span></div>
+      <div><b>${be === null ? "Never" : be}</b><span>orders to break even per trip</span></div>
+    </div>
+    <p class=${"vd " + cls}>${vd}</p>
+    ${be !== null && n("orders") < be && h`<p class="warn">You need at least ${be} orders per delivery to cover the trip.</p>`}
+    <p class="note">Average basket: ${inr(basket)}. Minimum order ${inr(CFG.min)}; delivery is free above ${inr(CFG.freeAbove)}, otherwise ${inr(CFG.fee)}. "Orders paying the fee" is the share of orders below the free-delivery limit.</p>
+    ${basket < CFG.min && h`<p class="warn">Your average basket is below the ${inr(CFG.min)} minimum order. Check the kg per order and your selling price.</p>`}
+    <p class="note">Your price is ${below.toFixed(0)}% ${below >= 0 ? "below" : "above"} the app price. Gross gap between app and APMC: ${inr(n("app") - n("apmc"))}/kg.</p>
+    <h2>Weekly profit at different volumes</h2>
+    <ul>${[10, 20, 30, 40, 60].map(o => h`<li key=${o} class="sens"><span>${o} orders per delivery</span><b class=${calc(o).profit >= 0 ? "good" : "bad"}>${inr(calc(o).profit * n("del"))}</b></li>`)}</ul>
+    <p class="note" style=${{ marginTop: 12 }}>Does not include your own time, FSSAI and registration costs, returns, refunds or any society fees. Check the app price on several items before trusting the gap.</p>
+  </div>`;
+}
+
+// ---- Price check: APMC vs local seller vs app ----
+function PriceCheck() {
+  const init = () => {
+    try { const o = JSON.parse(localStorage.getItem("wfb_prices") || "null"); if (o && o.p) return o; } catch (e) {}
+    return { p: {}, waste: 10, cut: 15 };
+  };
+  const [st, setSt] = useState(init);
+  React.useEffect(() => { try { localStorage.setItem("wfb_prices", JSON.stringify(st)); } catch (e) {} }, [st]);
+  const num = x => +x || 0;
+  const setP = (id, k, v) => setSt({ ...st, p: { ...st.p, [id]: { ...(st.p[id] || {}), [k]: v } } });
+  const rows = ITEMS.map(i => {
+    const r = st.p[i.id] || {};
+    const a = num(r.apmc), l = num(r.local), p = num(r.app);
+    const alts = [l, p].filter(x => x > 0);
+    if (!(a > 0 && alts.length)) return { i, r, done: false };
+    const sell = Math.round(Math.min(...alts) * (1 - num(st.cut) / 100));
+    const margin = (sell - a * (1 + num(st.waste) / 100)) / sell * 100;
+    return { i, r, done: true, sell, margin, gap: p > 0 ? (p - a) / p * 100 : null };
+  });
+  const done = rows.filter(x => x.done);
+  const gaps = done.filter(x => x.gap !== null);
+  const avg = arr => arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0;
+  const avgGap = avg(gaps.map(x => x.gap)), avgMargin = avg(done.map(x => x.margin));
+  const good = done.filter(x => x.margin >= 15).length, ok = done.filter(x => x.margin >= 8 && x.margin < 15).length;
+  let vd = "", cls = "good";
+  if (done.length < 5) { vd = "Enter prices for at least 5 items to get a useful read."; cls = ""; }
+  else if (good / done.length >= 0.5) vd = "Strong: most items leave a healthy margin after wastage.";
+  else if ((good + ok) / done.length >= 0.5) { vd = "Mixed: only some items are worth selling. Focus on the green ones."; cls = "mid"; }
+  else { vd = "Weak: the price gap is too small on most items to cover wastage and costs."; cls = "bad"; }
+  const reset = () => setSt({ p: {}, waste: st.waste, cut: st.cut });
+  const setG = k => e => setSt({ ...st, [k]: e.target.value });
+  return h`<div class="wrap adm">
+    <header><h1>Price check</h1><p class="sub">Enter prices per unit as shown. Leave blank what you did not check. Your entries are saved on this device.</p></header>
+    <div class="fg">
+      <label>Extra bought for wastage (%)<input type="number" inputmode="decimal" min="0" value=${st.waste} onInput=${setG("waste")} /></label>
+      <label>Sell below the cheapest rival by (%)<input type="number" inputmode="decimal" min="0" value=${st.cut} onInput=${setG("cut")} /></label>
+    </div>
+    <div class="sm sm2">
+      <div><b>${done.length}</b><span>items checked</span></div>
+      <div><b>${gaps.length ? avgGap.toFixed(0) + "%" : "–"}</b><span>average APMC gap vs app</span></div>
+      <div><b>${done.length ? avgMargin.toFixed(0) + "%" : "–"}</b><span>average margin after wastage</span></div>
+      <div><b>${good}</b><span>items with 15%+ margin</span></div>
+    </div>
+    <p class=${"vd " + cls}>${vd}</p>
+    <div class="pch"><span>Item</span><span>APMC ₹</span><span>Local ₹</span><span>App ₹</span></div>
+    <ul>${rows.map(x => h`<li key=${x.i.id} class="pc">
+      <div class="t">
+        <div><b>${x.i.e} ${x.i.n}</b><div class="note" style=${{ margin: 0 }}>per ${x.i.u}</div></div>
+        <input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " APMC price"} value=${x.r.apmc || ""} onInput=${e => setP(x.i.id, "apmc", e.target.value)} />
+        <input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " local seller price"} value=${x.r.local || ""} onInput=${e => setP(x.i.id, "local", e.target.value)} />
+        <input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " app price"} value=${x.r.app || ""} onInput=${e => setP(x.i.id, "app", e.target.value)} />
+      </div>
+      ${x.done && h`<div class=${"r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")}>Sell at ${inr(x.sell)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</div>`}
+    </li>`)}</ul>
+    <p class="note" style=${{ marginTop: 12 }}>Suggested sell price = the cheaper of the local seller and the app, minus your discount. Margin is after your wastage allowance and does not include delivery, packing or labour. Check the same quality and the same pack size on each platform.</p>
+    <button class="lk" onClick=${reset}>Clear all prices</button>
+  </div>`;
+}
+
+// ---- Catalogue editor ----
+const normItem = x => ({ id: x.id, c: +x.c, e: x.e || "🛒", n: x.n, u: x.u || "kg", p: +x.p || 0, mrp: +x.mrp || 0, ...(+x.w > 0 ? { w: +x.w } : {}) });
+
+function Catalogue() {
+  const [items, setItems] = useState(ITEMS.map(x => ({ ...x })));
+  const [nf, setNf] = useState({ c: 0, e: "", n: "", u: "kg", p: "", mrp: "", w: "" });
+  const pm = usePhotos();
+  const [pOpen, setPOpen] = useState(null);
+  const [pMsg, setPMsg] = useState("");
+  const addFiles = async (id, e) => {
+    const all = [...e.target.files].filter(f => f.type.startsWith("image/") && f.size < 20e6);
+    const files = all.filter(f => f.type !== "image/gif" || f.size <= 3e6);
+    const skipped = all.length - files.length;
+    e.target.value = "";
+    const cur = photoStore.map[id] || [];
+    const take = files.slice(0, 6 - cur.length);
+    if (!take.length) { if (skipped) setPMsg(skipped + " GIF file(s) over 3 MB were skipped. Please use a smaller GIF."); return; }
+    setPMsg("Adding photos…");
+    const urls = [];
+    for (const f of take) urls.push(await fileToDataUrl(f));
+    const ok = await savePhotos(id, [...cur, ...urls]);
+    setPMsg(ok ? (skipped ? skipped + " GIF file(s) over 3 MB were skipped." : "") : "Could not save on this device (storage blocked or full). The photos will be lost when you close the page.");
+  };
+  const rmPhoto = (id, j) => savePhotos(id, (photoStore.map[id] || []).filter((_, k) => k !== j));
+  const [copied, setCopied] = useState(false);
+  const commit = next => {
+    setItems(next); setCopied(false);
+    const norm = next.map(normItem);
+    ITEMS = norm;
+    try { localStorage.setItem(CK, JSON.stringify(norm)); } catch (e) {}
+  };
+  const edit = (id, k, v) => commit(items.map(x => x.id === id ? { ...x, [k]: v } : x));
+  const del = id => commit(items.filter(x => x.id !== id));
+  const add = () => {
+    if (!nf.n.trim() || !(+nf.p > 0)) return;
+    commit([...items, { ...nf, id: "c" + Date.now().toString(36), n: nf.n.trim() }]);
+    setNf({ ...nf, e: "", n: "", p: "", mrp: "", w: "" });
+  };
+  const reset = () => {
+    try { localStorage.removeItem(CK); } catch (e) {}
+    ITEMS = DEFAULT_ITEMS.map(x => ({ ...x }));
+    setItems(ITEMS.map(x => ({ ...x }))); setCopied(false);
+  };
+  const out = "[\n" + items.map(x => "  " + JSON.stringify(normItem(x))).join(",\n") + "\n]";
+  const copy = () => { try { navigator.clipboard.writeText(out).then(() => setCopied(true)); } catch (e) { setCopied(false); } };
+  const inp = (x, k, label, type) => h`<div><small>${label}</small><input type=${type || "number"} inputmode=${type ? "text" : "decimal"} min="0" aria-label=${x.n + " " + label} value=${x[k] === undefined ? "" : x[k]} onInput=${e => edit(x.id, k, e.target.value)} /></div>`;
+  return h`<div class="wrap adm">
+    <header><h1>Catalogue</h1><p class="sub">Add items and set your price and the local price to show struck out. Edits are saved on this device as a draft.</p></header>
+    <div class="ci addbox">
+      <b>Add an item</b>
+      <div class="l1"><input value=${nf.e} placeholder="🥦" aria-label="Emoji" onInput=${e => setNf({ ...nf, e: e.target.value })} /><input value=${nf.n} placeholder="Item name" aria-label="Item name" onInput=${e => setNf({ ...nf, n: e.target.value })} />
+        <select aria-label="Category" value=${nf.c} onChange=${e => setNf({ ...nf, c: +e.target.value })}>${CATS.map((c, i) => h`<option key=${c} value=${i}>${c.slice(0, 3)}</option>`)}</select></div>
+      <div class="l2">
+        <div><small>Unit</small><input value=${nf.u} aria-label="Unit" onInput=${e => setNf({ ...nf, u: e.target.value })} /></div>
+        <div><small>Your ₹</small><input type="number" inputmode="decimal" min="0" aria-label="Your price" value=${nf.p} onInput=${e => setNf({ ...nf, p: e.target.value })} /></div>
+        <div><small>Local ₹</small><input type="number" inputmode="decimal" min="0" aria-label="Local price" value=${nf.mrp} onInput=${e => setNf({ ...nf, mrp: e.target.value })} /></div>
+        <div><small>Kg/unit</small><input type="number" inputmode="decimal" min="0" aria-label="Kg per unit" value=${nf.w} onInput=${e => setNf({ ...nf, w: e.target.value })} /></div>
+      </div>
+      <button class="cta" disabled=${!nf.n.trim() || !(+nf.p > 0)} onClick=${add}>Add to ${CATS[nf.c]}</button>
+    </div>
+    ${CATS.map((cn, ci) => h`<div key=${cn}><h2>${cn}</h2><ul>
+      ${items.filter(x => +x.c === ci).map(x => h`<li key=${x.id} class="ci">
+        <div class="l1"><input value=${x.e || ""} aria-label=${x.n + " emoji"} onInput=${e => edit(x.id, "e", e.target.value)} /><input value=${x.n} aria-label=${"Name of " + x.n} onInput=${e => edit(x.id, "n", e.target.value)} /><button class="dl" aria-label=${"Delete " + x.n} onClick=${() => del(x.id)}>×</button></div>
+        <div class="l2">${inp(x, "u", "Unit", "text")}${inp(x, "p", "Your ₹")}${inp(x, "mrp", "Local ₹")}${inp(x, "w", "Kg/unit")}</div>
+        <button class="lk" style=${{ textAlign: "left" }} onClick=${() => { setPOpen(pOpen === x.id ? null : x.id); setPMsg(""); }}>📷 Photos (${(pm[x.id] || []).length})</button>
+        ${pOpen === x.id && h`<div class="pm">
+          <div class="pgrid">${(pm[x.id] || []).map((u, j) => h`<div key=${j} class="pth"><img src=${u} alt=${x.n + " photo " + (j + 1)} /><button aria-label=${"Remove photo " + (j + 1)} onClick=${() => rmPhoto(x.id, j)}>×</button></div>`)}</div>
+          ${(pm[x.id] || []).length < 6 ? h`<label class="up">Add photos<input type="file" accept="image/*" multiple onChange=${e => addFiles(x.id, e)} /></label>` : h`<p class="note">Maximum 6 photos per item.</p>`}
+          ${pMsg && h`<p class="warn">${pMsg}</p>`}
+          <p class="note" style=${{ margin: 0 }}>Photos are saved on this device only. Use clear photos of the real item.</p>
+        </div>`}
+        ${+x.mrp > 0 && +x.mrp <= +x.p && h`<p class="warn" style=${{ margin: 0 }}>Local price should be higher than yours to show a strikeout.</p>`}
+        ${+x.mrp > +x.p && h`<p class="note good" style=${{ margin: 0 }}>Customers see ₹${x.mrp} struck out, ${Math.round((x.mrp - x.p) / x.mrp * 100)}% off.</p>`}
+      </li>`)}
+    </ul></div>`)}
+    <h2>Send changes to customers</h2>
+    <p class="note">Customers only see the catalogue built into the page, so a change here is a draft on your device. To make it live, copy the list below and send it to Claude, or paste it over DEFAULT_ITEMS in your hosted file. To preview, open the order page in this same browser.</p>
+    <textarea readOnly value=${out} style=${{ minHeight: 140, width: "100%", fontSize: 12 }}></textarea>
+    <button class="cta" onClick=${copy}>${copied ? "Copied" : "Copy catalogue"}</button>
+    <p style=${{ marginTop: 14 }}><button class="lk" onClick=${reset}>Reset to the original list</button></p>
+  </div>`;
+}
+
+// ---- Societies admin ----
+function SocietiesAdmin() {
+  const [list, setList] = useState(SOCIETIES.map(x => ({ ...x })));
+  const [txt, setTxt] = useState("");
+  const [msg, setMsg] = useState("");
+  const [conf, setConf] = useState(false);
+  const [open, setOpen] = useState(null);
+  const parsed = txt.trim() ? parseSocieties(txt) : { rows: [], issues: [] };
+  const commit = next => {
+    setList(next); SOCIETIES = next;
+    try { localStorage.setItem(SOCK, JSON.stringify(next)); } catch (e) {}
+  };
+  const addRows = () => {
+    const map = new Map(list.map(x => [x.id, x]));
+    parsed.rows.forEach(r => map.set(r.id, r));
+    commit([...map.values()]); setTxt(""); setMsg(parsed.rows.length + " societies added or updated.");
+  };
+  const replaceAll = () => {
+    if (!conf) { setConf(true); setTimeout(() => setConf(false), 3000); return; }
+    commit(parsed.rows); setTxt(""); setConf(false); setMsg("List replaced with " + parsed.rows.length + " societies.");
+  };
+  const toggle = id => commit(list.map(x => x.id === id ? { ...x, status: x.status === "active" ? "soon" : "active" } : x));
+  const del = id => commit(list.filter(x => x.id !== id));
+  const link = id => CFG.pageUrl + "#" + id;
+  const invite = x => ["Hello " + x.name + " neighbours! 🥬", CFG.brand + " brings fresh vegetables, fruits, dal and staples straight from APMC to your society at pocket-friendly prices.",
+    "Order by " + CFG.close + " · Delivery " + (x.day || CFG.delivery) + (x.min ? " · Minimum order ₹" + x.min : ""), "Order here: " + link(x.id)].join("\n");
+  const copy = t => { try { navigator.clipboard.writeText(t); setMsg("Copied."); } catch (e) { setMsg("Select the text and copy it."); } };
+  const active = list.filter(x => x.status === "active").length;
+  const out = societiesCsv(list);
+  return h`<div class="wrap adm">
+    <header><h1>Societies</h1><p class="sub">${list.length} societies · ${active} active · ${list.length - active} coming soon</p></header>
+    <label>Paste rows, one society per line
+      <textarea value=${txt} onInput=${e => { setTxt(e.target.value); setMsg(""); }} rows="6" placeholder=${"Lodha Amara, Kolshet Road, 400607, Tower A;Tower B, Saturday morning, Main gate, 700, active, Amara;Kolshet"}></textarea>
+    </label>
+    <p class="note">Columns: society, area, pincode, buildings (separate with ;), delivery day, drop point, minimum order, status (active or soon), other names (separate with ;). Only society and area are required. Put a name in quotes if it contains a comma.</p>
+    ${txt.trim() && h`<div>
+      <p class="vd good" style=${{ margin: "4px 0" }}>${parsed.rows.length} valid row${parsed.rows.length === 1 ? "" : "s"}</p>
+      ${parsed.issues.map((x, i) => h`<p key=${i} class="warn" style=${{ margin: "2px 0" }}>${x}</p>`)}
+      <ul style=${{ margin: "8px 0" }}>${parsed.rows.slice(0, 5).map(r => h`<li key=${r.id} class="sx"><b>${r.name}</b><small>${r.area} · ${r.pincode || "no pincode"} · ${r.buildings.length} buildings · ${r.status}</small></li>`)}</ul>
+      ${parsed.rows.length > 5 && h`<p class="note">…and ${parsed.rows.length - 5} more.</p>`}
+      <div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button class="cta" disabled=${parsed.rows.length === 0} onClick=${addRows}>Add to list</button>
+        <button class="ghost" disabled=${parsed.rows.length === 0} onClick=${replaceAll}>${conf ? "Tap again to replace" : "Replace whole list"}</button>
+      </div>
+    </div>`}
+    ${msg && h`<p class="note good" role="status">${msg}</p>`}
+    <h2>Current list</h2>
+    <ul>${list.map(x => h`<li key=${x.id} class="sx">
+      <div class="top"><div><b>${x.name}</b><br /><small>${x.area}${x.pincode ? " · " + x.pincode : ""}</small></div>
+        <button class="chp" aria-pressed=${x.status === "active"} onClick=${() => toggle(x.id)}>${x.status === "active" ? "Active" : "Coming soon"}</button></div>
+      <small>${(x.buildings || []).length} buildings${x.day ? " · " + x.day : ""}${x.drop ? " · " + x.drop : ""}${x.min ? " · min ₹" + x.min : ""}</small>
+      <div class="top"><button class="lk" onClick=${() => setOpen(open === x.id ? null : x.id)}>${open === x.id ? "Hide link" : "Society link"}</button><button class="lk" onClick=${() => copy(invite(x))}>Copy invite message</button><a class="lk" target="_blank" rel="noopener" href=${"https://wa.me/?text=" + encodeURIComponent(invite(x))}>Share on WhatsApp</a><button class="lk" onClick=${() => del(x.id)}>Delete</button></div>
+      ${open === x.id && h`<div><input readOnly value=${link(x.id)} aria-label="Society link" style=${{ width: "100%", padding: 8, fontSize: 13 }} /><button class="lk" onClick=${() => copy(link(x.id))}>Copy link</button></div>`}
+    </li>`)}</ul>
+    <h2>Copy the whole list</h2>
+    <p class="note">Your list is saved on this device as a draft. Customers see the list built into the page, so send this to Claude (or paste it into your hosted file) to make it live.</p>
+    <textarea readOnly value=${out} style=${{ width: "100%", minHeight: 120 }} class="mono"></textarea>
+    <button class="cta" onClick=${() => copy(out)}>Copy list</button>
+  </div>`;
+}
+
+const fmtDT = t => { const d = new Date(t); return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) + ", " + d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }); };
+const AUD_TXT = { assigned: "Order assigned", taken_over: "Delivered by someone other than the assignee", wrong_code: "Wrong delivery code", locked: "Order locked after 5 wrong codes", delivered: "Delivered", status: "Order status changed", settings: "Settings changed", employee_added: "Employee added", pages_changed: "Employee pages changed", employee_activated: "Employee activated", employee_deactivated: "Employee deactivated", paid: "Payment released" };
+
+function Payouts({ emps, raw, save, bump }) {
+  const [range, setRange] = useState("week");
+  const [who, setWho] = useState("");
+  const [conf, setConf] = useState("");
+  const [copied, setCopied] = useState(false);
+  const now = new Date();
+  const start = range === "all" ? 0 : range === "month" ? new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    : range === "today" ? new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    : new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)).getTime();
+  const nameOf = m => (emps.find(e => e.mobile === m) || {}).name || (m === "admin" ? "Admin" : m || "");
+  const dels = raw.filter(o => !isOpen(o) && o.deliveredBy && o.deliveredBy !== "admin" && (o.deliveredAt || 0) >= start).sort((a, b) => b.deliveredAt - a.deliveredAt);
+  const rows = emps.map(e => {
+    const mine = dels.filter(o => o.deliveredBy === e.mobile), un = mine.filter(o => !o.paidAt);
+    const rate = e.rate == null ? 30 : +e.rate || 0;
+    return { e, mine, un, rate, due: un.length * rate, value: mine.reduce((s, o) => s + (+o.total || 0), 0) };
+  });
+  const setRate = (e, v) => save(emps.map(x => x.mobile === e.mobile ? { ...x, rate: Math.max(0, +v || 0) } : x));
+  const pay = r => {
+    if (conf !== r.e.mobile) { setConf(r.e.mobile); setTimeout(() => setConf(""), 3000); return; }
+    const t = Date.now(), ids = r.un.map(o => o.id);
+    ids.forEach(id => patchOrder(id, x => ({ ...x, paidAt: t, paidAmt: r.rate })));
+    audit("paid", { emp: r.e.mobile, name: r.e.name, deliveries: ids.length, rate: r.rate, amount: r.due, orders: ids, by: "admin" });
+    setConf(""); bump();
+  };
+  const csvText = () => ["Delivered at,Employee,Mobile,Society and flat,Customer,Order value,Code verified,Paid"].concat(dels.filter(o => !who || o.deliveredBy === who).map(o =>
+    [fmtDT(o.deliveredAt), nameOf(o.deliveredBy), o.deliveredBy, [o.soc, o.bld, o.unit].filter(Boolean).join(" "), o.name || "", o.total, "Yes", o.paidAt ? "Yes " + fmtDT(o.paidAt) : "No"].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(","))).join("\n");
+  const copy = () => { try { navigator.clipboard.writeText(csvText()).then(() => setCopied(true)); } catch (e) { setCopied(false); } };
+  const log = lsGet(AUK, []).filter(a => !who || a.emp === who).slice(-100).reverse();
+  const line = a => {
+    const emp = a.emp ? nameOf(a.emp) : "";
+    if (a.type === "paid") return emp + ": ₹" + a.amount + " for " + a.deliveries + " deliveries at ₹" + a.rate;
+    if (a.type === "settings") return "Minimum ₹" + a.min + " · fee ₹" + a.fee + " · free from ₹" + a.freeAbove + " · by " + a.close + " · delivery " + a.delivery;
+    if (a.type === "status") return (a.where || "") + " → " + (STAGES.find(x => x[0] === a.status) || [0, a.status])[1] + (a.by ? " · by " + nameOf(a.by) : "");
+    if (a.type.startsWith("employee_") || a.type === "pages_changed") return (emp || a.name) + (a.pages ? " · " + a.pages.map(k => (PAGES.find(x => x[0] === k) || [0, k])[1]).join(", ") : "");
+    return (emp ? emp + " · " : "") + (a.where || "") + (a.from ? " (was " + nameOf(a.from) + ")" : "") + (a.by && a.by !== a.emp ? " · by " + nameOf(a.by) : "") + (a.note ? " · " + a.note : "");
+  };
+  const tot = rows.reduce((s, r) => s + r.due, 0);
+  return h`<div>
+    <h2>Deliveries and payment</h2>
+    <p class="note">Only deliveries confirmed with the customer's code count here. Orders marked delivered by you without a code are left out.</p>
+    <div class="tabs" role="group" aria-label="Period">
+      ${[["today", "Today"], ["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${range === k} onClick=${() => setRange(k)}>${l}</button>`)}
+    </div>
+    ${emps.length === 0 ? h`<p class="note">Add employees to see their deliveries.</p>` : h`<ul>${rows.map(r => h`<li key=${r.e.mobile} class="oc">
+      <div class="top"><b>${r.e.name}</b><span class="chip">${r.mine.length} delivered</span></div>
+      <p>${r.un.length} not yet paid · ${r.mine.length - r.un.length} paid · orders worth ₹${r.value}</p>
+      <label>Pay per delivery (₹)<input type="number" min="0" value=${r.e.rate == null ? 30 : r.e.rate} onInput=${ev => setRate(r.e, ev.target.value)} /></label>
+      <div class="top"><b>Due: ₹${r.due}</b><button class="ghost" disabled=${r.due <= 0} onClick=${() => pay(r)}>${conf === r.e.mobile ? "Tap again to confirm" : "Mark as paid"}</button></div>
+    </li>`)}</ul>
+    <p class="note"><b>Total due for this period: ₹${tot}</b>. "Mark as paid" only records the payment here. You still send the money yourself (UPI or cash).</p>`}
+    <h2>Delivery log</h2>
+    <label>Show<select value=${who} onChange=${e => setWho(e.target.value)}><option value="">Everyone</option>${emps.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}</select></label>
+    <button class="ghost" style=${{ margin: "8px 0" }} onClick=${copy}>${copied ? "Copied" : "Copy deliveries as CSV (for Excel)"}</button>
+    <details class="sd"><summary>Deliveries in this period (${dels.filter(o => !who || o.deliveredBy === who).length})</summary>
+      <ul>${dels.filter(o => !who || o.deliveredBy === who).map(o => h`<li key=${o.id} class="pk"><b>${fmtDT(o.deliveredAt)}</b> · ${nameOf(o.deliveredBy)}<p>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")} · ${o.name} · ₹${o.total} · code verified${o.paidAt ? " · paid " + fmtDT(o.paidAt) : ""}</p></li>`)}</ul>
+    </details>
+    <details class="sd"><summary>Activity history (latest ${log.length})</summary>
+      <ul>${log.map((a, i) => h`<li key=${i} class="pk"><b>${AUD_TXT[a.type] || a.type}</b> · ${fmtDT(a.t)}<p>${line(a)}</p></li>`)}</ul>
+    </details>
+  </div>`;
+}
+
+function TeamAdmin() {
+  const [ver, setVer] = useState(0);
+  const [nm, setNm] = useState(""), [mb, setMb] = useState(""), [sc, setSc] = useState(""), [pgs, setPgs] = useState(["del"]);
+  const [err, setErr] = useState("");
+  void ver;
+  const emps = loadEmps();
+  const raw = allRawOrders();
+  const save = list => { lsSet(EMPK, list); setVer(v => v + 1); };
+  const add = () => {
+    const mobile = mb.replace(/\D/g, "").slice(-10);
+    if (!nm.trim()) return setErr("Enter the employee's name.");
+    if (!/^[6-9]\d{9}$/.test(mobile)) return setErr("Enter a valid 10-digit mobile number.");
+    if (emps.some(e => e.mobile === mobile)) return setErr("This mobile number is already on the team.");
+    if (ADMIN_MOBILES.includes(mobile)) return setErr("This number is the admin number. Use a different number for the employee.");
+    audit("employee_added", { emp: mobile, name: nm.trim(), pages: pgs, by: "admin" });
+    save([...emps, { mobile, rate: 30, pages: pgs.length ? pgs : ["del"], name: nm.trim(), active: true, socs: sc.split(";").map(x => x.trim()).filter(Boolean), t: Date.now() }]);
+    setNm(""); setMb(""); setSc(""); setPgs(["del"]); setErr("");
+    assignOpenOrders(); setVer(v => v + 1);
+  };
+  const toggle = e => {
+    audit(e.active ? "employee_deactivated" : "employee_activated", { emp: e.mobile, name: e.name, by: "admin" });
+    save(emps.map(x => x.mobile === e.mobile ? { ...x, active: !x.active } : x));
+    assignOpenOrders(); setVer(v => v + 1);
+  };
+  const setPages = (e, v) => {
+    if (!v.length) return;
+    audit("pages_changed", { emp: e.mobile, name: e.name, pages: v, by: "admin" });
+    save(emps.map(x => x.mobile === e.mobile ? { ...x, pages: v } : x));
+  };
+  const setSocs = (e, v) => save(emps.map(x => x.mobile === e.mobile ? { ...x, socs: v.split(";").map(y => y.trim()).filter(Boolean) } : x));
+  const open = raw.filter(isOpen);
+  const un = open.filter(o => !o.assignedTo || !emps.some(e => e.active && e.mobile === o.assignedTo));
+  const nameOf = m => (emps.find(e => e.mobile === m) || {}).name || "Not assigned";
+  const reassign = (o, m) => { audit("assigned", { ...orderTag(o), emp: m, from: o.assignedTo || "", by: "admin" }); patchOrder(o.id, x => ({ ...x, assignedTo: m })); setVer(v => v + 1); };
+  const active = emps.filter(e => e.active);
+  return h`<div class="wrap adm">
+    <header><h1>Delivery team</h1><p class="sub">Add employees, deactivate them, and see who has what.</p></header>
+    <div class="oc">
+      <b>Add an employee</b>
+      <label>Name<input value=${nm} onInput=${e => { setNm(e.target.value); setErr(""); }} /></label>
+      <label>Mobile number<input inputMode="numeric" maxLength="10" value=${mb} onInput=${e => { setMb(e.target.value.replace(/\D/g, "")); setErr(""); }} /></label>
+      <label>Societies they cover (optional, separate with ;)<input value=${sc} onInput=${e => setSc(e.target.value)} placeholder="Lodha Amara; Hiranandani Estate" /></label>
+      <p style=${{ margin: "4px 0 6px", fontWeight: 700, fontSize: 14 }}>Pages they can open after login</p>
+      <${PageChecks} val=${pgs} onChange=${setPgs} />
+      ${err && h`<p class="err" role="alert">${err}</p>`}
+      <button class="cta" onClick=${add}>Add employee</button>
+    </div>
+    <h2>Team (${active.length} active)</h2>
+    ${emps.length === 0 && h`<p class="note">No employees yet. Until you add one, orders stay unassigned.</p>`}
+    <ul>${emps.map(e => {
+      const p = open.filter(o => o.assignedTo === e.mobile).length, d = raw.filter(o => !isOpen(o) && o.deliveredBy === e.mobile).length;
+      return h`<li key=${e.mobile} class="oc">
+        <div class="top"><b>${e.name} · +91 ${e.mobile}</b><span class="chip">${e.active ? "Active" : "Deactivated"}</span></div>
+        <p>${p} pending · ${d} delivered</p>
+        <label>Societies covered<input defaultValue=${(e.socs || []).join("; ")} onBlur=${ev => setSocs(e, ev.target.value)} placeholder="All societies" /></label>
+        <details class="sd"><summary>Pages: ${pagesOf(e).map(k => PAGES.find(x => x[0] === k)[1]).join(", ")}</summary><${PageChecks} val=${pagesOf(e)} onChange=${v => setPages(e, v)} /></details>
+        <button class="ghost" onClick=${() => toggle(e)}>${e.active ? "Deactivate" : "Activate again"}</button>
+      </li>`;
+    })}</ul>
+    <h2>How orders are assigned</h2>
+    <p class="note">Each new order goes automatically to an active employee who covers that society. If several do, the one with the fewest pending orders gets it. If none is set for the society, it goes to whoever has the fewest pending orders overall. When you deactivate someone, their pending orders move to the others. You can still change any order below.</p>
+    <${Payouts} emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />
+    <h2>Pending orders (${open.length})</h2>
+    ${un.length > 0 && h`<p class="note">${un.length} order${un.length > 1 ? "s are" : " is"} not assigned. <button class="lk" onClick=${() => { migrateOrders(); assignOpenOrders(); setVer(v => v + 1); }}>Assign automatically</button></p>`}
+    <ul>${open.sort((a, b) => (a.soc || "").localeCompare(b.soc || "")).map(o => h`<li key=${o.id} class="pk">
+      <b>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b> · ${o.name} · ₹${o.total}
+      <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
+      <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
+        <option value="">Not assigned</option>
+        ${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}
+      </select></label>
+    </li>`)}</ul>
+    <p class="note">Employees see only their own orders. Orders placed on other phones will reach this list once the backend is connected.</p>
+  </div>`;
+}
+
+const maskM = m => m ? m.slice(0, 2) + "****" + m.slice(-2) : "Not logged in";
+const EV_TXT = { visit: "Opened the app", view: "Opened a page", login: "Logged in", login_failed: "Wrong OTP", logout: "Logged out", search: "Searched", add: "Added to cart", order: "Placed an order", photos: "Viewed photos", address: "Chose delivery address", location: "Shared GPS location", location_on: "Turned location sharing on", location_off: "Turned location sharing off" };
+const PAGE_TXT = { home: "Home", cat: "Category", cart: "Cart", orders: "Orders", profile: "Profile" };
+function evLine(a) {
+  if (a.type === "view") return PAGE_TXT[a.page] || a.page;
+  if (a.type === "search") return "“" + a.q + "” · " + a.results + " result" + (a.results === 1 ? "" : "s");
+  if (a.type === "add" || a.type === "photos") return a.item;
+  if (a.type === "order") return "₹" + a.total + " · " + a.items + " items";
+  if (a.type === "address") return ((SOCIETIES.find(x => x.id === a.society) || {}).name || a.society) + (a.building ? ", " + a.building : "");
+  if (a.type === "location") return a.lat + ", " + a.lng + (a.pin ? " · pin " + a.pin : "") + (a.acc ? " · ±" + a.acc + " m" : "");
+  if (a.type === "visit") return a.entry && a.entry !== "direct" ? "via " + ((SOCIETIES.find(x => x.id === a.entry) || {}).name || a.entry) + " link" : "direct";
+  return "";
+}
+function Bars({ rows, unit }) {
+  const mx = Math.max(1, ...rows.map(r => r[1]));
+  return h`<ul class="bxs">${rows.map(([k, v, extra]) => h`<li key=${k} class="bx"><span>${k}</span><div class="bt"><div class="bf" style=${{ width: Math.max(4, v / mx * 100) + "%" }}></div></div><b>${v}${unit || ""}</b>${extra && h`<small>${extra}</small>`}</li>`)}</ul>`;
+}
+function Insights() {
+  const [range, setRange] = useState("7");
+  const [adm, setAdm] = useState(true);
+  const [who, setWho] = useState("");
+  const [ver, setVer] = useState(0);
+  const [copied, setCopied] = useState(false);
+  void ver;
+  const start = range === "all" ? 0 : range === "1" ? new Date().setHours(0, 0, 0, 0) : Date.now() - (+range) * 864e5;
+  const all = lsGet(EVK, []).filter(e => e.t >= start && (adm || e.role !== "admin"));
+  const socName = id => id ? (SOCIETIES.find(x => x.id === id) || {}).name || id : "No society chosen yet";
+  const by = (list, f) => { const o = {}; list.forEach(e => { const k = f(e); if (k != null && k !== "") o[k] = (o[k] || 0) + 1; }); return Object.entries(o).sort((a, b) => b[1] - a[1]); };
+  const uniq = (list, f) => new Set(list.map(f).filter(Boolean)).size;
+  const sessions = uniq(all, e => e.sid), users = uniq(all, e => e.m);
+  const logins = all.filter(e => e.type === "login"), orders = all.filter(e => e.type === "order");
+  const sidsOf = f => new Set(all.filter(f).map(e => e.sid));
+  const sOpen = sidsOf(() => true), sAdd = sidsOf(e => e.type === "add"), sCart = sidsOf(e => e.type === "view" && e.page === "cart"), sOrd = sidsOf(e => e.type === "order");
+  const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+  const searches = all.filter(e => e.type === "search");
+  const noRes = by(searches.filter(e => e.results === 0), e => e.q);
+  const topSearch = by(searches, e => e.q).slice(0, 8);
+  const pages = by(all.filter(e => e.type === "view"), e => PAGE_TXT[e.page] || e.page);
+  const added = by(all.filter(e => e.type === "add"), e => e.item).slice(0, 8);
+  const hours = by(all, e => new Date(e.t).getHours()).slice(0, 3).map(([hh, n]) => (+hh % 12 || 12) + (+hh < 12 ? " AM" : " PM") + " (" + n + ")");
+  const socs = [...new Set(all.map(e => e.soc || ""))].map(id => {
+    const ev = all.filter(e => (e.soc || "") === id), o = ev.filter(e => e.type === "order");
+    return [socName(id), uniq(ev, e => e.m), uniq(ev, e => e.sid), o.length, o.reduce((s2, e) => s2 + (+e.total || 0), 0)];
+  }).sort((a, b) => b[2] - a[2]);
+  const locs = all.filter(e => e.type === "location");
+  const lastLoc = {}; locs.forEach(e => { lastLoc[e.m] = e; });
+  const gpsUsers = Object.values(lastLoc);
+  const pinRows = by(gpsUsers, e => e.pin || "Pin code not found");
+  const entries = by(all.filter(e => e.type === "visit"), e => e.entry && e.entry !== "direct" ? "Link: " + socName(e.entry) : "Direct");
+  const phones = all.filter(e => e.type === "visit" && e.w).filter(e => e.w < 768).length, visits = all.filter(e => e.type === "visit" && e.w).length;
+  const digits = who.replace(/\D/g, "");
+  const feed = all.filter(e => !digits || (e.m || "").includes(digits)).slice(-120).reverse();
+  const csv = () => ["Time,Type,Mobile,Society,Detail,Latitude,Longitude,Pincode,Session"].concat(all.slice().reverse().map(e => [fmtDT(e.t), EV_TXT[e.type] || e.type, e.m, socName(e.soc), evLine(e), e.lat, e.lng, e.pin, e.sid].map(x => '"' + String(x == null ? "" : x).replace(/"/g, '""') + '"').join(","))).join("\n");
+  const copy = () => { try { navigator.clipboard.writeText(csv()).then(() => setCopied(true)); } catch (e) { setCopied(false); } };
+  return h`<div class="wrap adm">
+    <header><h1>Insights</h1><p class="sub">Who opens the app, what they look for and where they are.</p></header>
+    <div class="tabs" role="group" aria-label="Period">${[["1", "Today"], ["7", "7 days"], ["30", "30 days"], ["all", "All time"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${range === k} onClick=${() => setRange(k)}>${l}</button>`)}</div>
+    <label class="pk2" style=${{ margin: "0 0 10px" }}><input type="checkbox" checked=${adm} onChange=${e => setAdm(e.target.checked)} /><span><b>Include admin's own activity</b><small>Turn this off once real customers start using the app.</small></span></label>
+    <p class="note">Recorded in this browser only, so it shows activity from this device. Phones of other customers will appear here once the backend is connected.</p>
+    <div class="sm">
+      <div><b>${sessions}</b><span>visits</span></div>
+      <div><b>${users}</b><span>logged-in users</span></div>
+      <div><b>${orders.length}</b><span>orders</span></div>
+    </div>
+    <div class="sm">
+      <div><b>${logins.length}</b><span>logins</span></div>
+      <div><b>${searches.length}</b><span>searches</span></div>
+      <div><b>${pct(sOrd.size, sOpen.size)}</b><span>visits that ordered</span></div>
+    </div>
+    <div class="sm">
+      <div><b>${gpsUsers.length}</b><span>users shared GPS</span></div>
+      <div><b>${all.filter(e => e.type === "location_off").length}</b><span>turned it off</span></div>
+      <div><b>${users ? Math.round(gpsUsers.length / users * 100) + "%" : "–"}</b><span>of users shared</span></div>
+    </div>
+    <h2>Visit funnel</h2>
+    <${Bars} rows=${[["Opened the app", sOpen.size], ["Added an item", sAdd.size], ["Opened the cart", sCart.size], ["Placed an order", sOrd.size]]} />
+    ${sAdd.size > sOrd.size && h`<p class="note">${sAdd.size - sOrd.size} visit${sAdd.size - sOrd.size === 1 ? "" : "s"} added items but did not order.</p>`}
+    <h2>What people search for</h2>
+    ${topSearch.length === 0 ? h`<p class="note">No searches yet.</p>` : h`<${Bars} rows=${topSearch} />`}
+    ${noRes.length > 0 && h`<h2>Searched but not found</h2><p class="note">Items people wanted that you do not sell yet. Good candidates to add.</p><${Bars} rows=${noRes.slice(0, 8)} />`}
+    <h2>Pages opened</h2>
+    ${pages.length ? h`<${Bars} rows=${pages} />` : h`<p class="note">No page views yet.</p>`}
+    <h2>Most added items</h2>
+    ${added.length ? h`<${Bars} rows=${added} />` : h`<p class="note">Nothing added yet.</p>`}
+    <h2>Where they are (by society)</h2>
+    <p class="note">Society is the delivery society people choose. GPS points come only from people who tapped Allow.</p>
+    ${socs.length === 0 ? h`<p class="note">No activity yet.</p>` : h`<ul>${socs.map(r => h`<li key=${r[0]} class="pk"><b>${r[0]}</b><p>${r[1]} user${r[1] === 1 ? "" : "s"} · ${r[2]} visit${r[2] === 1 ? "" : "s"} · ${r[3]} order${r[3] === 1 ? "" : "s"}${r[4] ? " · ₹" + r[4] : ""}</p></li>`)}</ul>`}
+    <h2>GPS locations</h2>
+    ${gpsUsers.length === 0 ? h`<p class="note">No one has shared their GPS location yet.</p>` : h`<div>
+      <p class="note">Users by pin code (latest location per user)</p><${Bars} rows=${pinRows} />
+      <ul>${gpsUsers.slice().reverse().slice(0, 10).map((e, i) => h`<li key=${i} class="pk"><b>${maskM(e.m)}</b> · ${fmtDT(e.t)}<p>${e.lat}, ${e.lng}${e.pin ? " · pin " + e.pin : ""} · ${socName(e.soc)} · <a class="lk" target="_blank" rel="noopener" href=${"https://www.google.com/maps?q=" + e.lat + "," + e.lng}>Open on map</a></p></li>`)}</ul>
+    </div>`}
+    <h2>How they arrive</h2>
+    ${entries.length ? h`<${Bars} rows=${entries} />` : h`<p class="note">No visits yet.</p>`}
+    ${visits > 0 && h`<p class="note">${Math.round(phones / visits * 100)}% of visits are on a phone.${hours.length ? " Busiest hours: " + hours.join(", ") + "." : ""}</p>`}
+    <h2>Activity trail</h2>
+    <label>Look up a user (mobile number, or leave empty for everyone)<input inputMode="numeric" value=${who} onInput=${e => setWho(e.target.value)} placeholder="9892443771" /></label>
+    <ul>${feed.map((e, i) => h`<li key=${i} class="pk"><b>${EV_TXT[e.type] || e.type}</b> · ${fmtDT(e.t)}<p>${digits ? "" : maskM(e.m) + " · "}${socName(e.soc)}${evLine(e) ? " · " + evLine(e) : ""}</p></li>`)}</ul>
+    ${feed.length === 0 && h`<p class="note">Nothing recorded for this period.</p>`}
+    <div style=${{ display: "flex", gap: 10, flexWrap: "wrap", margin: "12px 0" }}>
+      <button class="ghost" onClick=${copy}>${copied ? "Copied" : "Copy all as CSV (for Excel)"}</button>
+      <button class="ghost" onClick=${() => setVer(v => v + 1)}>Refresh</button>
+    </div>
+  </div>`;
+}
+
+function SettingsAdmin() {
+  const [min, setMin] = useState(String(CFG.min));
+  const [close, setClose] = useState(CFG.close);
+  const [delivery, setDelivery] = useState(CFG.delivery);
+  const [fee, setFee] = useState(String(CFG.fee));
+  const [free, setFree] = useState(String(CFG.freeAbove));
+  const [msg, setMsg] = useState("");
+  const [allSoc, setAllSoc] = useState(true);
+  const m = Math.round(+min);
+  const ownDay = SOCIETIES.filter(x => x.day && x.day !== delivery.trim());
+  const ownMin = SOCIETIES.filter(x => +x.min > 0 && +x.min !== m);
+  const hasOwn = ownDay.length + ownMin.length > 0;
+  const fv = Math.round(+fee), gv = Math.round(+free);
+  const bad = min === "" || !Number.isFinite(m) || m < 0 || m > 100000 || !close.trim() || !delivery.trim()
+    || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000;
+  const apply = v => {
+    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove;
+    try { localStorage.setItem(SETK, JSON.stringify(v)); } catch (e) {}
+    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, by: "admin" });
+  };
+  const save = () => {
+    if (bad) return;
+    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv });
+    if (allSoc && hasOwn) {
+      const next = SOCIETIES.map(x => ({ ...x, day: "", min: 0 }));
+      SOCIETIES = next;
+      try { localStorage.setItem(SOCK, JSON.stringify(next)); } catch (e) {}
+    }
+    setMsg("Saved. Customers see the new line on the Home page.");
+  };
+  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  return h`<div class="wrap adm">
+    <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
+    <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
+    <label>Delivery fee (₹)<input type="number" inputMode="numeric" min="0" value=${fee} onInput=${e => { setFee(e.target.value); setMsg(""); }} /></label>
+    <label>Free delivery on orders of (₹) or more<input type="number" inputMode="numeric" min="0" value=${free} onInput=${e => { setFree(e.target.value); setMsg(""); }} /></label>
+    <label>Orders placed by<input value=${close} onInput=${e => { setClose(e.target.value); setMsg(""); }} placeholder="Thursday 9 PM" /></label>
+    <label>Delivery<input value=${delivery} onInput=${e => { setDelivery(e.target.value); setMsg(""); }} placeholder="Saturday morning" /></label>
+    ${bad && h`<p class="warn">Enter amounts of 0 or more (fee up to ₹5,000) and fill both lines.</p>`}
+    ${!bad && gv > 0 && gv <= m && h`<p class="warn">Free delivery starts at or below the minimum order, so delivery will always be free.</p>`}
+    ${!bad && gv === 0 && h`<p class="warn">Free delivery from ₹0 means delivery is always free.</p>`}
+    ${hasOwn && h`<div class="oc" style=${{ margin: "4px 0 12px" }}>
+      <p style=${{ margin: "0 0 6px" }}><b>Some societies have their own settings</b></p>
+      <p class="note" style=${{ margin: "0 0 8px" }}>${[...ownDay.map(x => x.name + ": delivery " + x.day), ...ownMin.map(x => x.name + ": minimum ₹" + x.min)].join(" · ")}. Those override the values above for that society.</p>
+      <label class="pk2" style=${{ margin: 0 }}><input type="checkbox" checked=${allSoc} onChange=${e => setAllSoc(e.target.checked)} /><span><b>Use these values for every society</b><small>Removes each society's own delivery slot and minimum.</small></span></label>
+    </div>`}
+    <p class="note">What customers will see:</p>
+    <div class="banner"><span>🕘</span><span>Orders placed by <b>${close || "…"}</b>. Delivery <b>${delivery || "…"}</b>. Minimum order <b>₹${bad ? "…" : m}</b>.</span></div>
+    ${!bad && h`<p class="note">In the cart: delivery is <b>₹${fv}</b> for orders below ₹${gv}, and <b>free</b> for orders of ₹${gv} or more.</p>`}
+    <div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <button class="cta" disabled=${bad} onClick=${save}>Save</button>
+      <button class="ghost" onClick=${reset}>Reset to defaults</button>
+    </div>
+    ${msg && h`<p class="note good" role="status">${msg}</p>`}
+    <p class="note" style=${{ marginTop: 12 }}>A society can have its own delivery slot and minimum when you add it in the Societies tab. If it does not, these apply. Saved in this browser for now, so other phones will pick it up once the backend is connected.</p>
+  </div>`;
+}
+
+function Shell() {
+  const [t, setT] = useState(0);
+  return h`<div>
+    <div class="wrap"><div class="tabs top" role="group" aria-label="Admin sections">
+      <button class="tab" aria-pressed=${t === 0} onClick=${() => setT(0)}>Stock and orders</button>
+      <button class="tab" aria-pressed=${t === 1} onClick=${() => setT(1)}>Profit calculator</button>
+      <button class="tab" aria-pressed=${t === 2} onClick=${() => setT(2)}>Price check</button>
+      <button class="tab" aria-pressed=${t === 3} onClick=${() => setT(3)}>Catalogue</button>
+      <button class="tab" aria-pressed=${t === 4} onClick=${() => setT(4)}>Societies</button>
+      <button class="tab" aria-pressed=${t === 5} onClick=${() => setT(5)}>Team</button>
+      <button class="tab" aria-pressed=${t === 6} onClick=${() => setT(6)}>Insights</button>
+      <button class="tab" aria-pressed=${t === 7} onClick=${() => setT(7)}>Settings</button>
+    </div></div>
+    ${t === 0 ? h`<${Admin} />` : t === 1 ? h`<${Calc} />` : t === 2 ? h`<${PriceCheck} />` : t === 3 ? h`<${Catalogue} />` : t === 4 ? h`<${SocietiesAdmin} />` : t === 5 ? h`<${TeamAdmin} />` : t === 6 ? h`<${Insights} />` : h`<${SettingsAdmin} />`}
+  </div>`;
+}
+
+function AdminGate() {
+  const [m, setM] = useState(loadSession());
+  const out = () => { clearSession(); setM(""); };
+  if (!m) return h`<${Login} onDone=${setM} />`;
+  if (!ADMIN_MOBILES.includes(m)) return h`<div class="wrap lg">
+    <h1>Admin access only</h1>
+    <p class="sub">+91 ${m} does not have admin access.</p>
+    <p><a class="lk" href="#">Back to the order page</a> · <button class="lk" onClick=${out}>Log out and use another number</button></p>
+  </div>`;
+  return h`<div>
+    <${Shell} />
+    <div class="wrap"><p class="note" style=${{ marginTop: 20 }}>Admin: +91 ${m} · <button class="lk" onClick=${out}>Log out</button></p></div>
+  </div>`;
+}
+
+function Root() {
+  const [hs, setHs] = useState(location.hash);
+  React.useEffect(() => {
+    const f = () => setHs(location.hash);
+    window.addEventListener("hashchange", f);
+    return () => window.removeEventListener("hashchange", f);
+  }, []);
+  const link = hs && hs !== "#admin" ? SOCIETIES.find(x => x.id === hs.slice(1)) || null : null;
+  return hs === "#admin" ? h`<${AdminGate} />` : h`<${Gate} link=${link} />`;
+}
+
+migrateOrders();
+loadPhotos();
+ReactDOM.createRoot(document.getElementById("root")).render(h`<${Root} />`);
+</script>
+</body>
+</html>

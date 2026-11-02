@@ -1,0 +1,10 @@
+# Render Blueprint: deploys this folder as a free Static Site (no build step).
+services:
+  - type: web
+    runtime: static
+    name: farm-fresh-box
+    staticPublishPath: .
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
