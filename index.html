@@ -1690,6 +1690,7 @@ function Payouts({ emps, raw, save, bump }) {
   const [who, setWho] = useState("");
   const [conf, setConf] = useState("");
   const [copied, setCopied] = useState(false);
+  const [pf, setPf] = useState("");
   const now = new Date();
   const start = range === "all" ? 0 : range === "month" ? new Date(now.getFullYear(), now.getMonth(), 1).getTime()
     : range === "today" ? new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
@@ -1710,8 +1711,8 @@ function Payouts({ emps, raw, save, bump }) {
     audit("paid", { emp: r.e.mobile, name: r.e.name, deliveries: ids.length, rate: r.rate, amount: r.due, orders: ids, by: "admin" });
     setConf(""); bump();
   };
-  const csvText = () => ["Delivered at,Employee,Mobile,Society and flat,Customer,Order value,Code verified,Paid"].concat(dels.filter(o => !who || o.deliveredBy === who).map(o =>
-    [fmtDT(o.deliveredAt), nameOf(o.deliveredBy), o.deliveredBy, [o.soc, o.bld, o.unit].filter(Boolean).join(" "), o.name || "", o.total, "Yes", o.paidAt ? "Yes " + fmtDT(o.paidAt) : "No"].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(","))).join("\n");
+  const csvText = () => ["Delivered at,Employee,Mobile,Society and flat,Customer,Order value,Code verified,Payment status,Pay amount,Paid on"].concat(shown.map(o =>
+    [fmtDT(o.deliveredAt), nameOf(o.deliveredBy), o.deliveredBy, [o.soc, o.bld, o.unit].filter(Boolean).join(" "), o.name || "", o.total, "Yes", o.paidAt ? "Paid" : "Unpaid", amtOf(o), o.paidAt ? fmtDT(o.paidAt) : ""].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(","))).join("\n");
   const copy = () => { try { navigator.clipboard.writeText(csvText()).then(() => setCopied(true)); } catch (e) { setCopied(false); } };
   const log = lsGet(AUK, []).filter(a => !who || a.emp === who).slice(-100).reverse();
   const line = a => {
@@ -1723,6 +1724,9 @@ function Payouts({ emps, raw, save, bump }) {
     return (emp ? emp + " · " : "") + (a.where || "") + (a.from ? " (was " + nameOf(a.from) + ")" : "") + (a.by && a.by !== a.emp ? " · by " + nameOf(a.by) : "") + (a.note ? " · " + a.note : "");
   };
   const tot = rows.reduce((s, r) => s + r.due, 0);
+  const amtOf = o => o.paidAt ? (o.paidAmt != null ? +o.paidAmt : 0) : (o.payRate != null ? +o.payRate : ((rows.find(r => r.e.mobile === o.deliveredBy) || {}).rate || 0));
+  const shown = dels.filter(o => (!who || o.deliveredBy === who) && (pf === "" || (pf === "paid") === !!o.paidAt));
+  const shownTot = shown.reduce((t, o) => t + amtOf(o), 0);
   return h`<div>
     <h2>Deliveries and payment</h2>
     <p class="note">Only deliveries confirmed with the customer's code count here. Orders marked delivered by you without a code are left out.</p>
@@ -1739,8 +1743,12 @@ function Payouts({ emps, raw, save, bump }) {
     <h2>Delivery log</h2>
     <label>Show<select value=${who} onChange=${e => setWho(e.target.value)}><option value="">Everyone</option>${emps.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}</select></label>
     <button class="ghost" style=${{ margin: "8px 0" }} onClick=${copy}>${copied ? "Copied" : "Copy deliveries as CSV (for Excel)"}</button>
-    <details class="sd"><summary>Deliveries in this period (${dels.filter(o => !who || o.deliveredBy === who).length})</summary>
-      <ul>${dels.filter(o => !who || o.deliveredBy === who).map(o => h`<li key=${o.id} class="pk"><b>${fmtDT(o.deliveredAt)}</b> · ${nameOf(o.deliveredBy)}<p>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")} · ${o.name} · ₹${o.total} · code verified${o.paidAt ? " · paid " + fmtDT(o.paidAt) : ""}</p></li>`)}</ul>
+    <details class="sd"><summary>Deliveries in this period (${shown.length})</summary>
+      <div class="tabs" role="group" aria-label="Payment status">
+        ${[["", "All"], ["unpaid", "Unpaid"], ["paid", "Paid"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${pf === k} onClick=${() => setPf(k)}>${l}</button>`)}
+      </div>
+      <p class="note"><b>${shown.length} deliveries · ₹${shownTot}</b>${pf === "" ? " (paid and unpaid together)" : pf === "paid" ? " paid" : " still to pay"}</p>
+      <ul>${shown.map(o => h`<li key=${o.id} class="pk"><b>${fmtDT(o.deliveredAt)}</b> · ${nameOf(o.deliveredBy)}<p>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")} · ${o.name} · ₹${o.total} · code verified</p><p><span class=${"chip " + (o.paidAt ? "st-ok" : "st-bad")}>${o.paidAt ? "Paid" : "Unpaid"}</span> ₹${amtOf(o)}${o.paidAt ? " · paid on " + fmtDT(o.paidAt) : " · due"}</p></li>`)}</ul>
     </details>
     <details class="sd"><summary>Activity history (latest ${log.length})</summary>
       <ul>${log.map((a, i) => h`<li key=${i} class="pk"><b>${AUD_TXT[a.type] || a.type}</b> · ${fmtDT(a.t)}<p>${line(a)}</p></li>`)}</ul>
