@@ -231,6 +231,13 @@ select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;f
 input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{font-size:16px!important}
 .otp input{font-size:20px!important}
 .ph input{font-size:18px!important}
+/* Delivery status colours: Placed blue, Packed amber, Out for delivery purple, Delivered green */
+.st-placed{--c:#1d6fd8}.st-packed{--c:#9a6700}.st-out{--c:#7c3aed}.st-delivered{--c:#1a7f4b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .st-placed{--c:#6cb0ff}:root:not([data-theme="light"]) .st-packed{--c:#f2b84b}:root:not([data-theme="light"]) .st-out{--c:#b79cff}:root:not([data-theme="light"]) .st-delivered{--c:#5fd08f}}
+:root[data-theme="dark"] .st-placed{--c:#6cb0ff}:root[data-theme="dark"] .st-packed{--c:#f2b84b}:root[data-theme="dark"] .st-out{--c:#b79cff}:root[data-theme="dark"] .st-delivered{--c:#5fd08f}
+.oc[class*="st-"] .chip{color:var(--c);border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.oc[class*="st-"] .trk i.on{background:var(--c)}
+.trkl span.cur{color:var(--c);font-weight:700}
 </style>
 </head>
 <body>
@@ -804,10 +811,10 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         <header><h1>Order history</h1></header>
         ${notice && h`<div class="banner"><span>✅</span><span>${notice}</span></div>`}
         ${orders.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🧾</div><p>No orders yet.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<ul>
-          ${orders.map(o => h`<li key=${o.id} class="oc">
+          ${orders.map(o => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
             <div class="top"><b>${fmtDate(o.t)}</b><span class="chip">${STAGES[stageIdx(o.status)][1]}</span></div>
             <div class="trk" aria-hidden="true">${STAGES.map((st, k) => h`<i key=${st[0]} class=${k <= stageIdx(o.status) ? "on" : ""}></i>`)}</div>
-            <div class="trkl" aria-hidden="true">${STAGES.map(st => h`<span key=${st[0]}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
+            <div class="trkl" aria-hidden="true">${STAGES.map((st, k) => h`<span key=${st[0]} class=${k === stageIdx(o.status) ? "cur" : ""}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
             ${o.status === "delivered" && o.deliveredBy && o.deliveredBy !== "admin" && h`<p>Delivered by ${(findEmp(o.deliveredBy) || {}).name || "our delivery partner"}${o.deliveredAt ? " · " + fmtDate(o.deliveredAt) : ""}</p>`}
             <p>${o.lines.map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
             ${o.soc && h`<p>Deliver to: ${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")}</p>`}
