@@ -6,7 +6,7 @@ The whole app is one file, `index.html` (React loaded from a CDN), so there is n
 ## Deploy on Render (Static Site)
 1. In Render choose **New > Blueprint** (or **New > Static Site**) and connect this repo.
 2. For a Static Site set **Build command** to empty and **Publish directory** to `.`
-3. After the first deploy, open `index.html` and set `CFG.pageUrl` to your Render address
+3. `CFG.pageUrl` in `index.html` is already set to https://farm-fresh-box.onrender.com. Change it if the address changes.
    (society invite links are built from it), then commit and push.
 4. Set `CFG.wa` to the real WhatsApp number (country code first, no plus sign). Orders are sent to it.
 
