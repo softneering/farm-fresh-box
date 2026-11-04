@@ -251,6 +251,7 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .bl li span{color:var(--mut)}
 .bsum{margin:8px 0;font-size:14px;color:var(--mut)}
 .bsum>div{display:flex;justify-content:space-between;padding:2px 0}
+.spk{margin:10px 0}.spk .pgs{max-height:240px;overflow:auto}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -1784,9 +1785,27 @@ function Payouts({ emps, raw, save, bump }) {
   </div>`;
 }
 
+// Tick-list of societies for an employee. value = array of society names; empty means every society.
+function SocPicker({ value, onChange }) {
+  const names = SOCIETIES.map(x => x.name);
+  const low = names.map(x => x.toLowerCase());
+  const gone = (value || []).filter(v => !low.includes(String(v).toLowerCase().trim()));
+  const has = n => (value || []).some(v => String(v).toLowerCase().trim() === n.toLowerCase());
+  const toggle = n => onChange(has(n) ? value.filter(v => String(v).toLowerCase().trim() !== n.toLowerCase()) : [...(value || []), n]);
+  const cnt = (value || []).length;
+  return h`<div class="spk">
+    <div class="top"><b>Societies they cover</b><span class="note" style=${{ margin: 0 }}>${cnt === 0 ? "All societies" : cnt + " selected"}</span></div>
+    ${names.length === 0 && h`<p class="note">Add societies in the Societies tab first. Until then this employee covers everyone.</p>`}
+    <div class="pgs">${names.map(n => h`<label key=${n} class="pk2"><input type="checkbox" checked=${has(n)} onChange=${() => toggle(n)} /><span><b>${n}</b></span></label>`)}
+      ${gone.map(n => h`<label key=${"x" + n} class="pk2"><input type="checkbox" checked=${true} onChange=${() => onChange(value.filter(v => v !== n))} /><span><b>${n}</b><small>(removed) not in your societies list. Untick to drop it.</small></span></label>`)}</div>
+    ${names.length > 0 && h`<div style=${{ display: "flex", gap: 8, margin: "6px 0" }}><button type="button" class="lk" onClick=${() => onChange([...names])}>Select all</button><button type="button" class="lk" onClick=${() => onChange([])}>Clear</button></div>`}
+    <p class="note" style=${{ margin: 0 }}>Leave all unticked to let this employee get orders from any society.</p>
+  </div>`;
+}
+
 function TeamAdmin() {
   const [ver, setVer] = useState(0);
-  const [nm, setNm] = useState(""), [mb, setMb] = useState(""), [sc, setSc] = useState(""), [pgs, setPgs] = useState(["del"]);
+  const [nm, setNm] = useState(""), [mb, setMb] = useState(""), [sc, setSc] = useState([]), [pgs, setPgs] = useState(["del"]);
   const [err, setErr] = useState("");
   void ver;
   const emps = loadEmps();
@@ -1799,8 +1818,8 @@ function TeamAdmin() {
     if (emps.some(e => e.mobile === mobile)) return setErr("This mobile number is already on the team.");
     if (ADMIN_MOBILES.includes(mobile)) return setErr("This number is the admin number. Use a different number for the employee.");
     audit("employee_added", { emp: mobile, name: nm.trim(), pages: pgs, by: "admin" });
-    save([...emps, { mobile, pages: pgs.length ? pgs : ["del"], name: nm.trim(), active: true, socs: sc.split(";").map(x => x.trim()).filter(Boolean), t: Date.now() }]);
-    setNm(""); setMb(""); setSc(""); setPgs(["del"]); setErr("");
+    save([...emps, { mobile, pages: pgs.length ? pgs : ["del"], name: nm.trim(), active: true, socs: sc, t: Date.now() }]);
+    setNm(""); setMb(""); setSc([]); setPgs(["del"]); setErr("");
     assignOpenOrders(); setVer(v => v + 1);
   };
   const toggle = e => {
@@ -1813,7 +1832,7 @@ function TeamAdmin() {
     audit("pages_changed", { emp: e.mobile, name: e.name, pages: v, by: "admin" });
     save(emps.map(x => x.mobile === e.mobile ? { ...x, pages: v } : x));
   };
-  const setSocs = (e, v) => save(emps.map(x => x.mobile === e.mobile ? { ...x, socs: v.split(";").map(y => y.trim()).filter(Boolean) } : x));
+  const setSocs = (e, v) => save(emps.map(x => x.mobile === e.mobile ? { ...x, socs: v } : x));
   const open = raw.filter(isOpen);
   const un = open.filter(o => !o.assignedTo || !emps.some(e => e.active && e.mobile === o.assignedTo));
   const nameOf = m => (emps.find(e => e.mobile === m) || {}).name || "Not assigned";
@@ -1825,7 +1844,7 @@ function TeamAdmin() {
       <b>Add an employee</b>
       <label>Name<input value=${nm} onInput=${e => { setNm(e.target.value); setErr(""); }} /></label>
       <label>Mobile number<input inputMode="numeric" maxLength="10" value=${mb} onInput=${e => { setMb(e.target.value.replace(/\D/g, "")); setErr(""); }} /></label>
-      <label>Societies they cover (optional, separate with ;)<input value=${sc} onInput=${e => setSc(e.target.value)} placeholder="Lodha Amara; Hiranandani Estate" /></label>
+      <${SocPicker} value=${sc} onChange=${setSc} />
       <p style=${{ margin: "4px 0 6px", fontWeight: 700, fontSize: 14 }}>Pages they can open after login</p>
       <${PageChecks} val=${pgs} onChange=${setPgs} />
       ${err && h`<p class="err" role="alert">${err}</p>`}
@@ -1838,7 +1857,7 @@ function TeamAdmin() {
       return h`<li key=${e.mobile} class="oc">
         <div class="top"><b>${e.name} · +91 ${e.mobile}</b><span class=${"chip " + (e.active ? "st-ok" : "st-bad")}>${e.active ? "Active" : "Deactivated"}</span></div>
         <p>${p} pending · ${d} delivered</p>
-        <label>Societies covered<input defaultValue=${(e.socs || []).join("; ")} onBlur=${ev => setSocs(e, ev.target.value)} placeholder="All societies" /></label>
+        <${SocPicker} value=${e.socs || []} onChange=${v => setSocs(e, v)} />
         <details class="sd"><summary>Pages: ${pagesOf(e).map(k => PAGES.find(x => x[0] === k)[1]).join(", ")}</summary><${PageChecks} val=${pagesOf(e)} onChange=${v => setPages(e, v)} /></details>
         <button class="ghost" onClick=${() => toggle(e)}>${e.active ? "Deactivate" : "Activate again"}</button>
       </li>`;
