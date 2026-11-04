@@ -242,6 +242,13 @@ input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{fo
 .st-ok{--c:#1a7f4b}.st-bad{--c:#c62828}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .st-ok{--c:#5fd08f}:root:not([data-theme="light"]) .st-bad{--c:#ff8a80}}
 :root[data-theme="dark"] .st-ok{--c:#5fd08f}:root[data-theme="dark"] .st-bad{--c:#ff8a80}
+.err{display:flex;gap:8px;align-items:flex-start;background:color-mix(in srgb,#c62828 12%,transparent);border:1.5px solid #c62828;color:#b71c1c;border-radius:12px;padding:10px 12px;font-weight:700;font-size:15px;line-height:1.35;margin:6px 0 12px}
+p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:normal;text-align:left;font-weight:700}
+.otp label{letter-spacing:normal;font-size:15px;font-weight:700;text-align:left}
+.err::before{content:"⚠";flex:none}
+.otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
+:root[data-theme="dark"] .err{color:#ffb4ab;border-color:#ff8a80}:root[data-theme="dark"] .otp input.bad{border-color:#ff8a80}
 </style>
 </head>
 <body>
@@ -1105,7 +1112,7 @@ function completeDelivery(id, code, empMobile) {
     const tries = (o.tries || 0) + 1;
     patchOrder(id, x => ({ ...x, tries: tries >= 5 ? 0 : tries, lockUntil: tries >= 5 ? Date.now() + 5 * 60 * 1000 : 0 }));
     audit(tries >= 5 ? "locked" : "wrong_code", { ...orderTag(o), emp: empMobile, by: empMobile });
-    return tries >= 5 ? "Too many wrong codes. Locked for 5 minutes." : "That code is not correct. Ask the customer again.";
+    return tries >= 5 ? "Too many wrong codes. Locked for 5 minutes." : "That code is not correct. Ask the customer again. " + (5 - tries) + (5 - tries === 1 ? " try left." : " tries left.");
   }
   patchOrder(id, x => ({ ...x, status: "delivered", deliveredAt: Date.now(), deliveredBy: empMobile, tries: 0, lockUntil: 0 }));
   audit("delivered", { ...orderTag(o), emp: empMobile, by: empMobile, codeOk: true, customer: o.phone || o._m });
@@ -1148,7 +1155,7 @@ function Deliveries({ emp, onLogout }) {
     ${o.phone && h`<p><a class="lk" href=${"tel:" + o.phone}>Call ${o.phone}</a></p>`}
     <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
     ${isFree ? h`<button class="ghost" onClick=${() => take(o)}>Take this order</button>` : open === o.id ? h`<div class="otp">
-      <label>Code from the customer<input inputMode="numeric" maxLength="4" placeholder="4-digit code" value=${code} onInput=${e => { setCode(e.target.value.replace(/\D/g, "").slice(0, 4)); setErr(""); }} /></label>
+      <label>Code from the customer<input class=${err ? "bad" : ""} inputMode="numeric" maxLength="4" placeholder="4-digit code" value=${code} onInput=${e => { setCode(e.target.value.replace(/\D/g, "").slice(0, 4)); setErr(""); }} /></label>
       ${err && h`<p class="err" role="alert">${err}</p>`}
       <div style=${{ display: "flex", gap: 10 }}><button class="cta" onClick=${() => submit(o)}>Confirm delivery</button><button class="ghost" onClick=${() => { setOpen(null); setCode(""); setErr(""); }}>Cancel</button></div>
     </div>` : h`<div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
