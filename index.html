@@ -259,7 +259,8 @@ const CFG = {
   pageUrl: "https://farm-fresh-box.onrender.com"
 };
 // Admin settings (minimum order, cut-off, delivery slot). Saved in this browser; a backend will share them later.
-const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 40, freeAbove: 1000 };
+let OFF_CATS = new Set(); // categories the admin has hidden from customers (by number)
+const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 40, freeAbove: 1000, offCats: [] };
 (function applySettings() {
   try {
     const o = JSON.parse(localStorage.getItem(SETK) || "null");
@@ -267,6 +268,7 @@ const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", d
       if (Number.isFinite(+o.min) && +o.min >= 0) CFG.min = Math.round(+o.min);
       if (Number.isFinite(+o.fee) && +o.fee >= 0 && o.fee !== "" && o.fee != null) CFG.fee = Math.round(+o.fee);
       if (Number.isFinite(+o.freeAbove) && +o.freeAbove >= 0 && o.freeAbove !== "" && o.freeAbove != null) CFG.freeAbove = Math.round(+o.freeAbove);
+      if (Array.isArray(o.offCats)) OFF_CATS = new Set(o.offCats.map(Number).filter(Number.isFinite));
       if (o.close) CFG.close = String(o.close); if (o.delivery) CFG.delivery = String(o.delivery);
     }
   } catch (e) {}
@@ -390,7 +392,8 @@ function parseSocieties(text) {
 const csvCell = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
 const societiesCsv = list => ["society,area,pincode,buildings,day,drop point,min order,status,aliases"].concat(list.map(x => [x.name, x.area, x.pincode, (x.buildings || []).join(";"), x.day, x.drop, x.min || "", x.status, (x.alias || []).join(";")].map(csvCell).join(","))).join("\n");
 const BOX = { name: "Family Veg Box", items: { tom: 2, pot: 2, oni: 2, car: 1, spi: 2, cap: 1 } };
-const boxLines = () => Object.keys(BOX.items).map(k => ({ it: ITEMS.find(i => i.id === k), q: BOX.items[k] })).filter(x => x.it);
+const boxLines = () => Object.keys(BOX.items).map(k => ({ it: ITEMS.find(i => i.id === k), q: BOX.items[k] })).filter(x => x.it && !OFF_CATS.has(+x.it.c));
+const shopItems = () => ITEMS.filter(i => !OFF_CATS.has(+i.c));
 const boxPrice = () => boxLines().reduce((s, x) => s + x.q * x.it.p, 0);
 
 function Stepper({ q, label, onAdd, onSub }) {
@@ -575,6 +578,7 @@ function NavBar({ tab, go, count }) {
 }
 
 function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
+  const ITEMS = shopItems(); // only items from categories the admin has switched on
   const OK = "wfb_orders_" + mobile;
   const soc = SOCIETIES.find(x => x.id === profile.soc) || null;
   const linkSoc = link && link.status === "active" ? link : null;
@@ -586,7 +590,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
   const [editAddr, setEditAddr] = useState(false);
   const [cart, setCart] = useState({});
   const [tab, setTab] = useState("home");
-  const [cat, setCat] = useState(0);
+  const [cat, setCat] = useState(() => { const k = CATS.findIndex((c, i) => !OFF_CATS.has(i)); return k < 0 ? 0 : k; });
   const [q, setQ] = useState("");
   const qn = q.trim().toLowerCase();
   const match = i => !qn || i.n.toLowerCase().includes(qn);
@@ -744,7 +748,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
           <div><h2>${BOX.name}</h2><p>${boxLines().map(x => x.it.n).join(", ")} · ₹${boxPrice()}</p></div>
           <button onClick=${addBox}>Add box</button>
         </div>`}
-        ${!qn && h`<div class="tiles">${CATS.map((c, i) => h`<button key=${c} class="tile" onClick=${() => { setCat(i); go("cat"); }}><span>${CAT_E[i] || "🛒"}</span>${c}<small>${ITEMS.filter(x => +x.c === i).length} items</small></button>`)}</div>`}
+        ${!qn && h`<div class="tiles">${CATS.map((c, i) => OFF_CATS.has(i) ? null : h`<button key=${c} class="tile" onClick=${() => { setCat(i); go("cat"); }}><span>${CAT_E[i] || "🛒"}</span>${c}<small>${ITEMS.filter(x => +x.c === i).length} items</small></button>`)}</div>`}
         ${!qn && deals.length > 0 && h`<div><h2 class="sec">Today’s best deals</h2><ul>${deals.map(i => rowFor(i, cart[i.id] || 0))}</ul></div>`}
       </div>`}
 
@@ -752,7 +756,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         <div style=${{ paddingTop: 12 }}>${searchBox}</div>
         <div class="cp">
         <nav class="rail" aria-label="Categories">
-          ${CATS.map((c, i) => { const n = lines.filter(l => +((ITEMS.find(x => x.id === l.id) || {}).c) === i).length; const has = ITEMS.some(x => +x.c === i && match(x)); return h`<button key=${c} class="rb" disabled=${!has} aria-current=${cat === i ? "true" : "false"} onClick=${() => jumpCat(i)}><span class="re">${CAT_E[i] || "🛒"}${n > 0 && h`<i>${n}</i>`}</span>${c}</button>`; })}
+          ${CATS.map((c, i) => { if (OFF_CATS.has(i)) return null; const n = lines.filter(l => +((ITEMS.find(x => x.id === l.id) || {}).c) === i).length; const has = ITEMS.some(x => +x.c === i && match(x)); return h`<button key=${c} class="rb" disabled=${!has} aria-current=${cat === i ? "true" : "false"} onClick=${() => jumpCat(i)}><span class="re">${CAT_E[i] || "🛒"}${n > 0 && h`<i>${n}</i>`}</span>${c}</button>`; })}
         </nav>
         <div class="cl">
           ${qn && ITEMS.filter(match).length === 0 && h`<p class="note">No items match “${q}”. Try another word.</p>`}
@@ -1570,7 +1574,7 @@ function Catalogue() {
       </div>
       <button class="cta" disabled=${!nf.n.trim() || !(+nf.p > 0)} onClick=${add}>Add to ${CATS[nf.c]}</button>
     </div>
-    ${CATS.map((cn, ci) => h`<div key=${cn}><h2>${cn}</h2><ul>
+    ${CATS.map((cn, ci) => h`<div key=${cn}><h2>${cn}${OFF_CATS.has(ci) ? " (hidden from customers)" : ""}</h2><ul>
       ${items.filter(x => +x.c === ci).map(x => h`<li key=${x.id} class="ci">
         <div class="l1"><input value=${x.e || ""} aria-label=${x.n + " emoji"} onInput=${e => edit(x.id, "e", e.target.value)} /><input value=${x.n} aria-label=${"Name of " + x.n} onInput=${e => edit(x.id, "n", e.target.value)} /><button class="dl" aria-label=${"Delete " + x.n} onClick=${() => del(x.id)}>×</button></div>
         <div class="l2">${inp(x, "u", "Unit", "text")}${inp(x, "p", "Your ₹")}${inp(x, "mrp", "Local ₹")}${inp(x, "w", "Kg/unit")}</div>
@@ -1688,7 +1692,7 @@ function Payouts({ emps, raw, save, bump }) {
   const line = a => {
     const emp = a.emp ? nameOf(a.emp) : "";
     if (a.type === "paid") return emp + ": ₹" + a.amount + " for " + a.deliveries + " deliveries at ₹" + a.rate;
-    if (a.type === "settings") return "Minimum ₹" + a.min + " · fee ₹" + a.fee + " · free from ₹" + a.freeAbove + " · by " + a.close + " · delivery " + a.delivery;
+    if (a.type === "settings") return (a.off && a.off.length ? "Hidden: " + a.off.map(i => CATS[i]).join(", ") + " · " : "") + "Minimum ₹" + a.min + " · fee ₹" + a.fee + " · free from ₹" + a.freeAbove + " · by " + a.close + " · delivery " + a.delivery;
     if (a.type === "status") return (a.where || "") + " → " + (STAGES.find(x => x[0] === a.status) || [0, a.status])[1] + (a.by ? " · by " + nameOf(a.by) : "");
     if (a.type.startsWith("employee_") || a.type === "pages_changed") return (emp || a.name) + (a.pages ? " · " + a.pages.map(k => (PAGES.find(x => x[0] === k) || [0, k])[1]).join(", ") : "");
     return (emp ? emp + " · " : "") + (a.where || "") + (a.from ? " (was " + nameOf(a.from) + ")" : "") + (a.by && a.by !== a.emp ? " · by " + nameOf(a.by) : "") + (a.note ? " · " + a.note : "");
@@ -1905,6 +1909,7 @@ function SettingsAdmin() {
   const [min, setMin] = useState(String(CFG.min));
   const [close, setClose] = useState(CFG.close);
   const [delivery, setDelivery] = useState(CFG.delivery);
+  const [off, setOff] = useState([...OFF_CATS]);
   const [fee, setFee] = useState(String(CFG.fee));
   const [free, setFree] = useState(String(CFG.freeAbove));
   const [msg, setMsg] = useState("");
@@ -1915,15 +1920,15 @@ function SettingsAdmin() {
   const hasOwn = ownDay.length + ownMin.length > 0;
   const fv = Math.round(+fee), gv = Math.round(+free);
   const bad = min === "" || !Number.isFinite(m) || m < 0 || m > 100000 || !close.trim() || !delivery.trim()
-    || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000;
+    || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000;
   const apply = v => {
-    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove;
+    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; OFF_CATS = new Set(v.offCats || []);
     try { localStorage.setItem(SETK, JSON.stringify(v)); } catch (e) {}
-    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, by: "admin" });
+    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, off: v.offCats || [], by: "admin" });
   };
   const save = () => {
     if (bad) return;
-    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv });
+    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, offCats: off });
     if (allSoc && hasOwn) {
       const next = SOCIETIES.map(x => ({ ...x, day: "", min: 0 }));
       SOCIETIES = next;
@@ -1931,12 +1936,16 @@ function SettingsAdmin() {
     }
     setMsg("Saved. Customers see the new line on the Home page.");
   };
-  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
   return h`<div class="wrap adm">
     <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
     <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
     <label>Delivery fee (₹)<input type="number" inputMode="numeric" min="0" value=${fee} onInput=${e => { setFee(e.target.value); setMsg(""); }} /></label>
     <label>Free delivery on orders of (₹) or more<input type="number" inputMode="numeric" min="0" value=${free} onInput=${e => { setFree(e.target.value); setMsg(""); }} /></label>
+    <h2 style=${{ margin: "14px 0 4px" }}>Categories</h2>
+    <p class="note">Tick the categories customers can see. Unticked ones disappear from Home, Category, search, deals and the family box. Items stay in your catalogue.</p>
+    <div class="pgs">${CATS.map((c, i) => h`<label key=${c} class="pk2"><input type="checkbox" checked=${!off.includes(i)} onChange=${e => { setOff(e.target.checked ? off.filter(x => x !== i) : [...off, i]); setMsg(""); }} /><span><b>${CAT_E[i] || "🛒"} ${c}</b><small>${ITEMS.filter(x => +x.c === i).length} items · ${off.includes(i) ? "Hidden from customers" : "Shown to customers"}</small></span></label>`)}</div>
+    ${off.length >= CATS.length && h`<p class="warn">At least one category must stay on.</p>`}
     <label>Orders placed by<input value=${close} onInput=${e => { setClose(e.target.value); setMsg(""); }} placeholder="Thursday 9 PM" /></label>
     <label>Delivery<input value=${delivery} onInput=${e => { setDelivery(e.target.value); setMsg(""); }} placeholder="Saturday morning" /></label>
     ${bad && h`<p class="warn">Enter amounts of 0 or more (fee up to ₹5,000) and fill both lines.</p>`}
