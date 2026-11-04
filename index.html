@@ -1121,7 +1121,7 @@ function allRawOrders() {
 const AUK = "wfb_audit";
 function audit(type, d) {
   const l = lsGet(AUK, []); l.push({ t: Date.now(), type, ...d });
-  lsSet(AUK, l.slice(-20000));
+  lsSet(AUK, l.slice(-8000));
 }
 const orderTag = o => ({ order: o.id, where: [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "", total: o.total, cust: o.name || "" });
 // Short order number shown everywhere (derived from the order id so it is the same on every screen)
@@ -2093,6 +2093,7 @@ function Insights() {
   const [who, setWho] = useState("");
   const [ver, setVer] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [vt, setVt] = useState("overview"), [et, setEt] = useState(""), [esoc, setEsoc] = useState("all"), [eq, setEq] = useState(""), [en, setEn] = useState(30);
   void ver;
   const start = range === "all" ? 0 : range === "1" ? new Date().setHours(0, 0, 0, 0) : Date.now() - (+range) * 864e5;
   const all = lsGet(EVK, []).filter(e => e.t >= start && (adm || e.role !== "admin"));
@@ -2121,14 +2122,20 @@ function Insights() {
   const entries = by(all.filter(e => e.type === "visit"), e => e.entry && e.entry !== "direct" ? "Link: " + socName(e.entry) : "Direct");
   const phones = all.filter(e => e.type === "visit" && e.w).filter(e => e.w < 768).length, visits = all.filter(e => e.type === "visit" && e.w).length;
   const digits = who.replace(/\D/g, "");
-  const feed = all.filter(e => !digits || (e.m || "").includes(digits)).slice(-120).reverse();
+  const eqq = eq.trim().toLowerCase();
+  const feedAll = all.filter(e => (!digits || (e.m || "").includes(digits)) && (!et || (et === "key" ? ["login", "order", "location", "location_off", "login_failed"].includes(e.type) : e.type === et)) && (esoc === "all" || (e.soc || "") === esoc)
+    && (!eqq || [EV_TXT[e.type], evLine(e), socName(e.soc)].some(f => String(f || "").toLowerCase().includes(eqq)))).reverse();
+  const feed = feedAll.slice(0, en);
+  const typeCounts = by(all, e => e.type);
   const csv = () => ["Time,Type,Mobile,Society,Detail,Latitude,Longitude,Pincode,Session"].concat(all.slice().reverse().map(e => [fmtDT(e.t), EV_TXT[e.type] || e.type, e.m, socName(e.soc), evLine(e), e.lat, e.lng, e.pin, e.sid].map(x => '"' + String(x == null ? "" : x).replace(/"/g, '""') + '"').join(","))).join("\n");
   const copy = () => { try { navigator.clipboard.writeText(csv()).then(() => setCopied(true)); } catch (e) { setCopied(false); } };
   return h`<div class="wrap adm">
     <header><h1>Insights</h1><p class="sub">Who opens the app, what they look for and where they are.</p></header>
     <div class="tabs" role="group" aria-label="Period">${[["1", "Today"], ["7", "7 days"], ["30", "30 days"], ["all", "All time"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${range === k} onClick=${() => setRange(k)}>${l}</button>`)}</div>
+    <div class="tabs" role="tablist" aria-label="Insights sections">${[["overview", "Overview"], ["activity", "Activity (" + all.length + ")"]].map(([k, l]) => h`<button key=${k} role="tab" class="tab" aria-pressed=${vt === k} aria-selected=${vt === k} onClick=${() => setVt(k)}>${l}</button>`)}</div>
     <label class="pk2" style=${{ margin: "0 0 10px" }}><input type="checkbox" checked=${adm} onChange=${e => setAdm(e.target.checked)} /><span><b>Include admin's own activity</b><small>Turn this off once real customers start using the app.</small></span></label>
     <p class="note">Recorded in this browser only, so it shows activity from this device. Phones of other customers will appear here once the backend is connected.</p>
+    ${vt === "overview" && h`<div>
     <div class="sm">
       <div><b>${sessions}</b><span>visits</span></div>
       <div><b>${users}</b><span>logged-in users</span></div>
@@ -2165,10 +2172,26 @@ function Insights() {
     <h2>How they arrive</h2>
     ${entries.length ? h`<${Bars} rows=${entries} />` : h`<p class="note">No visits yet.</p>`}
     ${visits > 0 && h`<p class="note">${Math.round(phones / visits * 100)}% of visits are on a phone.${hours.length ? " Busiest hours: " + hours.join(", ") + "." : ""}</p>`}
+    </div>`}
+    ${vt === "activity" && h`<div>
     <h2>Activity trail</h2>
-    <label>Look up a user (mobile number, or leave empty for everyone)<input inputMode="numeric" value=${who} onInput=${e => setWho(e.target.value)} placeholder="9892443771" /></label>
+    <input type="search" value=${eq} onInput=${e => { setEq(e.target.value); setEn(30); }} placeholder="Search what they did (item, search word, page)" aria-label="Search activity" />
+    <div class="fl2">
+      <label>Event<select value=${et} onChange=${e => { setEt(e.target.value); setEn(30); }}>
+        <option value="">All events (${all.length})</option><option value="key">Key events only</option>
+        ${typeCounts.map(([k, n]) => h`<option key=${k} value=${k}>${EV_TXT[k] || k} (${n})</option>`)}
+      </select></label>
+      <label>Society<select value=${esoc} onChange=${e => { setEsoc(e.target.value); setEn(30); }}>
+        <option value="all">All societies</option>
+        ${[...new Set(all.map(e => e.soc || ""))].map(id => h`<option key=${id} value=${id}>${socName(id)}</option>`)}
+      </select></label>
+    </div>
+    <label>Look up a user (mobile number)<input inputMode="numeric" value=${who} onInput=${e => { setWho(e.target.value); setEn(30); }} placeholder="9892443771" /></label>
+    <p class="note">Showing ${feed.length} of ${feedAll.length}${(et || esoc !== "all" || eqq || digits) ? h` · <button class="lk" onClick=${() => { setEt(""); setEsoc("all"); setEq(""); setWho(""); setEn(30); }}>Clear filters</button>` : ""}</p>
     <ul>${feed.map((e, i) => h`<li key=${i} class="pk"><b>${EV_TXT[e.type] || e.type}</b> · ${fmtDT(e.t)}<p>${digits ? "" : maskM(e.m) + " · "}${socName(e.soc)}${evLine(e) ? " · " + evLine(e) : ""}</p></li>`)}</ul>
-    ${feed.length === 0 && h`<p class="note">Nothing recorded for this period.</p>`}
+    ${feedAll.length === 0 && h`<p class="note">Nothing recorded for this period.</p>`}
+    ${feedAll.length > en && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setEn(en + 30)}>Show more (${feedAll.length - en} more)</button>`}
+    </div>`}
     <div style=${{ display: "flex", gap: 10, flexWrap: "wrap", margin: "12px 0" }}>
       <button class="ghost" onClick=${copy}>${copied ? "Copied" : "Copy all as CSV (for Excel)"}</button>
       <button class="ghost" onClick=${() => setVer(v => v + 1)}>Refresh</button>
