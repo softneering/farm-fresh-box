@@ -269,7 +269,7 @@ const CFG = {
   wa: "919892443771",
   close: "Thursday 9 PM",
   delivery: "Saturday morning",
-  min: 700, minKg: 0, freeAbove: 1000, fee: 40,
+  min: 700, minKg: 0, freeAbove: 1000, fee: 40, maxTries: 10,
   // Login. demoOtp:true shows the OTP on screen (no SMS, NOT secure). For real OTPs set demoOtp:false
   // and set api to your backend base URL, which must provide:
   //   POST {api}/send-otp   body {mobile}        -> {ok:true}
@@ -279,7 +279,7 @@ const CFG = {
 };
 // Admin settings (minimum order, cut-off, delivery slot). Saved in this browser; a backend will share them later.
 let OFF_CATS = new Set(); // categories the admin has hidden from customers (by number)
-const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 40, freeAbove: 1000, offCats: [] };
+const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 40, freeAbove: 1000, maxTries: 10, offCats: [] };
 (function applySettings() {
   try {
     const o = JSON.parse(localStorage.getItem(SETK) || "null");
@@ -287,6 +287,7 @@ const SETK = "wfb_settings", SET_DEFAULT = { min: 700, close: "Thursday 9 PM", d
       if (Number.isFinite(+o.min) && +o.min >= 0) CFG.min = Math.round(+o.min);
       if (Number.isFinite(+o.fee) && +o.fee >= 0 && o.fee !== "" && o.fee != null) CFG.fee = Math.round(+o.fee);
       if (Number.isFinite(+o.freeAbove) && +o.freeAbove >= 0 && o.freeAbove !== "" && o.freeAbove != null) CFG.freeAbove = Math.round(+o.freeAbove);
+      if (Number.isInteger(+o.maxTries) && +o.maxTries >= 1 && +o.maxTries <= 50 && o.maxTries !== "") CFG.maxTries = Math.round(+o.maxTries);
       if (Array.isArray(o.offCats)) OFF_CATS = new Set(o.offCats.map(Number).filter(Number.isFinite));
       if (o.close) CFG.close = String(o.close); if (o.delivery) CFG.delivery = String(o.delivery);
     }
@@ -1111,9 +1112,10 @@ function completeDelivery(id, code, empMobile) {
   if (o.assignedTo && o.assignedTo !== empMobile) audit("taken_over", { ...orderTag(o), emp: empMobile, from: o.assignedTo, by: empMobile });
   if (String(code).trim() !== String(o.otp)) {
     const tries = (o.tries || 0) + 1;
-    patchOrder(id, x => ({ ...x, tries: tries >= 5 ? 0 : tries, lockUntil: tries >= 5 ? Date.now() + 5 * 60 * 1000 : 0 }));
-    audit(tries >= 5 ? "locked" : "wrong_code", { ...orderTag(o), emp: empMobile, by: empMobile });
-    return tries >= 5 ? "Too many wrong codes. Locked for 5 minutes." : "That code is not correct. Ask the customer again. " + (5 - tries) + (5 - tries === 1 ? " try left." : " tries left.");
+    patchOrder(id, x => ({ ...x, tries: tries >= CFG.maxTries ? 0 : tries, lockUntil: tries >= CFG.maxTries ? Date.now() + 5 * 60 * 1000 : 0 }));
+    audit(tries >= CFG.maxTries ? "locked" : "wrong_code", { ...orderTag(o), emp: empMobile, by: empMobile });
+    const left = CFG.maxTries - tries;
+    return left <= 0 ? "Too many wrong codes. Try again in a few minutes." : "That code is not correct. Ask the customer again. " + left + (left === 1 ? " try left." : " tries left.");
   }
   patchOrder(id, x => ({ ...x, status: "delivered", deliveredAt: Date.now(), deliveredBy: empMobile, tries: 0, lockUntil: 0 }));
   audit("delivered", { ...orderTag(o), emp: empMobile, by: empMobile, codeOk: true, customer: o.phone || o._m });
@@ -1931,23 +1933,24 @@ function SettingsAdmin() {
   const [off, setOff] = useState([...OFF_CATS]);
   const [fee, setFee] = useState(String(CFG.fee));
   const [free, setFree] = useState(String(CFG.freeAbove));
+  const [mt, setMt] = useState(String(CFG.maxTries));
   const [msg, setMsg] = useState("");
   const [allSoc, setAllSoc] = useState(true);
   const m = Math.round(+min);
   const ownDay = SOCIETIES.filter(x => x.day && x.day !== delivery.trim());
   const ownMin = SOCIETIES.filter(x => +x.min > 0 && +x.min !== m);
   const hasOwn = ownDay.length + ownMin.length > 0;
-  const fv = Math.round(+fee), gv = Math.round(+free);
+  const fv = Math.round(+fee), gv = Math.round(+free), tv = Math.round(+mt);
   const bad = min === "" || !Number.isFinite(m) || m < 0 || m > 100000 || !close.trim() || !delivery.trim()
-    || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000;
+    || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000 || mt === "" || !Number.isInteger(tv) || tv < 1 || tv > 50;
   const apply = v => {
-    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; OFF_CATS = new Set(v.offCats || []);
+    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; OFF_CATS = new Set(v.offCats || []);
     try { localStorage.setItem(SETK, JSON.stringify(v)); } catch (e) {}
-    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, off: v.offCats || [], by: "admin" });
+    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, maxTries: v.maxTries, off: v.offCats || [], by: "admin" });
   };
   const save = () => {
     if (bad) return;
-    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, offCats: off });
+    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, offCats: off });
     if (allSoc && hasOwn) {
       const next = SOCIETIES.map(x => ({ ...x, day: "", min: 0 }));
       SOCIETIES = next;
@@ -1955,19 +1958,21 @@ function SettingsAdmin() {
     }
     setMsg("Saved. Customers see the new line on the Home page.");
   };
-  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
   return h`<div class="wrap adm">
     <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
     <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
     <label>Delivery fee (₹)<input type="number" inputMode="numeric" min="0" value=${fee} onInput=${e => { setFee(e.target.value); setMsg(""); }} /></label>
     <label>Free delivery on orders of (₹) or more<input type="number" inputMode="numeric" min="0" value=${free} onInput=${e => { setFree(e.target.value); setMsg(""); }} /></label>
+    <label>Wrong delivery-code attempts allowed<input type="number" inputMode="numeric" min="1" max="50" value=${mt} onInput=${e => { setMt(e.target.value); setMsg(""); }} /></label>
+    <p class="note">After this many wrong codes on one order, the employee is locked out of that order for 5 minutes.</p>
     <h2 style=${{ margin: "14px 0 4px" }}>Categories</h2>
     <p class="note">Tick the categories customers can see. Unticked ones disappear from Home, Category, search, deals and the family box. Items stay in your catalogue.</p>
     <div class="pgs">${CATS.map((c, i) => h`<label key=${c} class="pk2"><input type="checkbox" checked=${!off.includes(i)} onChange=${e => { setOff(e.target.checked ? off.filter(x => x !== i) : [...off, i]); setMsg(""); }} /><span><b>${CAT_E[i] || "🛒"} ${c}</b><small>${ITEMS.filter(x => +x.c === i).length} items · ${off.includes(i) ? "Hidden from customers" : "Shown to customers"}</small></span></label>`)}</div>
     ${off.length >= CATS.length && h`<p class="warn">At least one category must stay on.</p>`}
     <label>Orders placed by<input value=${close} onInput=${e => { setClose(e.target.value); setMsg(""); }} placeholder="Thursday 9 PM" /></label>
     <label>Delivery<input value=${delivery} onInput=${e => { setDelivery(e.target.value); setMsg(""); }} placeholder="Saturday morning" /></label>
-    ${bad && h`<p class="warn">Enter amounts of 0 or more (fee up to ₹5,000) and fill both lines.</p>`}
+    ${bad && h`<p class="warn">Enter amounts of 0 or more (fee up to ₹5,000), attempts from 1 to 50, and fill both lines.</p>`}
     ${!bad && gv > 0 && gv <= m && h`<p class="warn">Free delivery starts at or below the minimum order, so delivery will always be free.</p>`}
     ${!bad && gv === 0 && h`<p class="warn">Free delivery from ₹0 means delivery is always free.</p>`}
     ${hasOwn && h`<div class="oc" style=${{ margin: "4px 0 12px" }}>
