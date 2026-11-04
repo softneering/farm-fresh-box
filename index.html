@@ -268,6 +268,14 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .pk>.sd>summary{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .pk .es{display:flex;flex-direction:column;min-width:0}
 .pk .es small{color:var(--mut);font-weight:400;font-size:13px}
+.rowsel{display:flex;gap:10px;align-items:flex-start;list-style:none}
+.rowsel>.sd{flex:1;min-width:0}
+.rowsel .sc{width:22px;height:22px;margin-top:12px;flex:none}
+.grp{padding:10px 12px}
+.grp>summary{display:flex;justify-content:space-between;align-items:center}
+.grp ul{margin-top:8px}
+.bulk{position:sticky;bottom:12px;z-index:5;background:var(--card);border:1.5px solid var(--leaf);border-radius:14px;padding:10px 12px;margin:8px 0;display:grid;gap:6px;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.bulk{grid-template-columns:1fr 1fr}.bulk>b,.bulk>.lk{grid-column:1/-1;text-align:left}.bulk label{margin:0;font-size:13px}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -1846,6 +1854,7 @@ function TeamAdmin() {
   const [err, setErr] = useState("");
   const [addOpen, setAddOpen] = useState(false), [tq, setTq] = useState(""), [tf, setTf] = useState("all"), [lim, setLim] = useState(10);
   const [oq, setOq] = useState(""), [os, setOs] = useState("all"), [oa, setOa] = useState("all"), [osoc, setOsoc] = useState("all"), [olim, setOlim] = useState(20);
+  const [grp, setGrp] = useState(true), [gopen, setGopen] = useState({}), [selMode, setSelMode] = useState(false), [sel, setSel] = useState([]), [bmsg, setBmsg] = useState("");
   void ver;
   const emps = loadEmps();
   const raw = allRawOrders();
@@ -1942,18 +1951,48 @@ function TeamAdmin() {
       return h`<div>
         ${open.length > 0 && h`<p class="note">${fl.length === open.length ? "Showing all " + open.length : "Showing " + fl.length + " of " + open.length}${(os !== "all" || oa !== "all" || osoc !== "all" || qq) ? h` · <button class="lk" onClick=${() => { setOq(""); setOs("all"); setOa("all"); setOsoc("all"); setOlim(20); }}>Clear filters</button>` : ""}</p>`}
         ${open.length > 0 && fl.length === 0 && h`<p class="note">No pending orders match.</p>`}
-        <ul>${fl.slice(0, olim).map(o => h`<li key=${o.id} class=${"pk st-" + STAGES[stageIdx(o.status)][0]}>
-          <details class="sd">
-            <summary><span class="es"><b>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b><small>${o.name || "Customer"} · ₹${o.total} · ${isUn(o) ? "Not assigned" : nameOf(o.assignedTo)}</small></span><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></summary>
-            <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
-            <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
-              <option value="">Not assigned</option>
-              ${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}
-            </select></label>
-            ${o.phone && h`<p class="note" style=${{ margin: 0 }}>Customer: <a class="lk" href=${"tel:" + o.phone}>${o.phone}</a></p>`}
-          </details>
-        </li>`)}</ul>
-        ${fl.length > olim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setOlim(olim + 20)}>Show more (${fl.length - olim} more)</button>`}
+        ${open.length > 0 && h`<div class="tabs" role="group" aria-label="View">
+          <button class="tab" aria-pressed=${grp} onClick=${() => setGrp(true)}>By society</button>
+          <button class="tab" aria-pressed=${!grp} onClick=${() => setGrp(false)}>List</button>
+          <button class="tab" aria-pressed=${selMode} onClick=${() => { setSelMode(!selMode); setSel([]); setBmsg(""); }}>${selMode ? "Done selecting" : "Select"}</button>
+        </div>`}
+        ${bmsg && h`<p class="note good" role="status">${bmsg}</p>`}
+        ${selMode && h`<div class="bulk">
+          <b>${sel.length} selected</b>
+          <button class="lk" onClick=${() => setSel(fl.map(o => o.id))}>Select all ${fl.length} shown</button>
+          <button class="lk" onClick=${() => setSel([])}>Clear</button>
+          <label>Assign selected to<select value="" disabled=${sel.length === 0} onChange=${ev => { let m = ev.target.value; if (!m) return; if (m === "__none") m = ""; const ids = sel; ids.forEach(id => { const o = open.find(x => x.id === id); if (o) reassign(o, m); }); setBmsg(ids.length + " order" + (ids.length > 1 ? "s" : "") + " assigned to " + (m ? nameOf(m) : "nobody") + "."); setSel([]); }}>
+            <option value="">Choose…</option><option value="__none">Not assigned</option>${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}
+          </select></label>
+          <label>Mark selected as<select value="" disabled=${sel.length === 0} onChange=${ev => { const st = ev.target.value; if (!st) return; const ids = sel; ids.forEach(id => { const o = open.find(x => x.id === id); if (o) setStage(o, st, "admin"); }); setBmsg(ids.length + " order" + (ids.length > 1 ? "s" : "") + " marked " + STAGES.find(x => x[0] === st)[1] + "."); setSel([]); setVer(v => v + 1); }}>
+            <option value="">Choose…</option>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}
+          </select></label>
+        </div>`}
+        ${(() => {
+          const row = o => h`<li key=${o.id} class=${"pk rowsel st-" + STAGES[stageIdx(o.status)][0]}>
+            ${selMode && h`<input type="checkbox" class="sc" aria-label=${"Select order " + (o.unit || o.id)} checked=${sel.includes(o.id)} onChange=${() => setSel(sel.includes(o.id) ? sel.filter(x => x !== o.id) : [...sel, o.id])} />`}
+            <details class="sd">
+              <summary><span class="es"><b>${grp ? [o.bld, o.unit].filter(Boolean).join(", ") || o.flat : [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b><small>${o.name || "Customer"} · ₹${o.total} · ${isUn(o) ? "Not assigned" : nameOf(o.assignedTo)}</small></span><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></summary>
+              <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
+              <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
+                <option value="">Not assigned</option>
+                ${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}
+              </select></label>
+              ${o.phone && h`<p class="note" style=${{ margin: 0 }}>Customer: <a class="lk" href=${"tel:" + o.phone}>${o.phone}</a></p>`}
+            </details>
+          </li>`;
+          if (!grp) return h`<div><ul>${fl.slice(0, olim).map(row)}</ul>
+            ${fl.length > olim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setOlim(olim + 20)}>Show more (${fl.length - olim} more)</button>`}</div>`;
+          const names = [...new Set(fl.map(o => o.soc || ""))];
+          return h`<div>${names.map(n => {
+            const g = fl.filter(o => (o.soc || "") === n), gu = g.filter(isUn).length, isOpenG = !!gopen[n] || !!qq || names.length === 1, allSel = g.length > 0 && g.every(o => sel.includes(o.id));
+            return h`<details key=${n} class="sd grp" open=${isOpenG} onToggle=${ev => { const v = ev.target.open; if (ev.target.dataset.k === n && !!gopen[n] !== v) setGopen({ ...gopen, [n]: v }); }} data-k=${n}>
+              <summary><span class="es"><b>${n || "No society"} (${g.length})</b><small>${gu > 0 ? gu + " not assigned · " : ""}${["placed", "packed", "out"].map(k => [k, g.filter(o => (stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]) === k).length]).filter(x => x[1]).map(x => x[1] + " " + (STAGES.find(z => z[0] === x[0])[1]).toLowerCase()).join(" · ")}</small></span></summary>
+              ${selMode && h`<label class="pk2" style=${{ margin: "0 0 8px" }}><input type="checkbox" checked=${allSel} onChange=${() => setSel(allSel ? sel.filter(id => !g.some(o => o.id === id)) : [...new Set([...sel, ...g.map(o => o.id)])])} /><span><b>Select all ${g.length} in ${n || "this group"}</b></span></label>`}
+              <ul>${g.map(row)}</ul>
+            </details>`;
+          })}</div>`;
+        })()}
       </div>`;
     })()}
     <p class="note">Employees see only their own orders. Orders placed on other phones will reach this list once the backend is connected.</p>
