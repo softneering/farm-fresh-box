@@ -274,12 +274,20 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .grp{padding:10px 12px}
 .grp>summary{display:flex;justify-content:space-between;align-items:center}
 .grp ul{margin-top:8px}
+.grp .es{display:flex;flex-direction:column;min-width:0}
+.grp .es small{color:var(--mut);font-weight:400;font-size:13px}
 .bulk{position:sticky;bottom:12px;z-index:5;background:var(--card);border:1.5px solid var(--leaf);border-radius:14px;padding:10px 12px;margin:8px 0;display:grid;gap:6px;box-shadow:0 4px 16px rgba(0,0,0,.12)}
 .bulk{grid-template-columns:1fr 1fr}.bulk>b,.bulk>.lk{grid-column:1/-1;text-align:left}.bulk label{margin:0;font-size:13px}
 .trail{list-style:none;margin:6px 0;padding:0;font-size:14px}
 .trail li{padding:5px 0;border-bottom:1px dashed var(--line,rgba(128,128,128,.3))}
 .trail li span{display:block;color:var(--mut);font-size:12px}
 .ono{margin:2px 0 6px;font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.03em}
+.sumstrip{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;font-size:13px;color:var(--mut)}
+.sumstrip span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.sumstrip b{color:var(--ink)}
+.sumstrip .bad,.sumstrip .bad b{color:var(--cta)}
+.tb{display:inline-block;margin-left:4px;background:var(--cta);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px}
+.tab[aria-pressed="true"] .tb{background:#fff;color:var(--cta)}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -1775,7 +1783,7 @@ function OrderTrail({ id }) {
 }
 const AUD_TXT = { placed: "Order placed", assigned: "Order assigned", taken_over: "Delivered by someone other than the assignee", wrong_code: "Wrong delivery code", locked: "Order locked after too many wrong codes", delivered: "Delivered", status: "Order status changed", settings: "Settings changed", employee_added: "Employee added", pages_changed: "Employee pages changed", employee_activated: "Employee activated", employee_deactivated: "Employee deactivated", paid: "Payment released" };
 
-function Payouts({ emps, raw, save, bump }) {
+function Payouts({ emps, raw, save, bump, part }) {
   const [range, setRange] = useState("week");
   const [who, setWho] = useState("");
   const [conf, setConf] = useState("");
@@ -1830,12 +1838,12 @@ function Payouts({ emps, raw, save, bump }) {
   const shown = dels.filter(o => (!who || o.deliveredBy === who) && (pf === "" || (pf === "paid") === !!o.paidAt));
   const shownTot = shown.reduce((t, o) => t + amtOf(o), 0);
   return h`<div>
-    <h2>Deliveries and payment</h2>
+    <h2>${part === "log" ? "Delivery log" : "Deliveries and payment"}</h2>
     <p class="note">Only deliveries confirmed with the customer's code count here. Orders marked delivered by you without a code are left out.</p>
     <div class="tabs" role="group" aria-label="Period">
       ${[["today", "Today"], ["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${range === k} onClick=${() => setRange(k)}>${l}</button>`)}
     </div>
-    ${emps.length === 0 ? h`<p class="note">Add employees to see their deliveries.</p>` : h`<div>
+    ${part === "pay" && (emps.length === 0 ? h`<p class="note">Add employees to see their deliveries.</p>` : h`<div>
       <div class="tabs" role="group" aria-label="Show payouts">${[["due", "Needs payment (" + dueRows.length + ")"], ["all", "Everyone (" + rows.length + ")"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${pv === k} onClick=${() => { setPv(k); setPlim(8); }}>${l}</button>`)}</div>
       ${rows.length > 5 && h`<input type="search" value=${pq} onInput=${e => { setPq(e.target.value); setPlim(8); }} placeholder="Search employee" aria-label="Search payouts" />`}
       <p class="note"><b>Total due for this period: ₹${tot}</b>${dueRows.length ? " across " + dueRows.length + " employee" + (dueRows.length > 1 ? "s" : "") : ""}. "Mark as paid" only records the payment here. You still send the money yourself (UPI or cash).</p>
@@ -1849,8 +1857,8 @@ function Payouts({ emps, raw, save, bump }) {
         </div>
       </li>`)}</ul>
       ${prow.length > plim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setPlim(plim + 8)}>Show more (${prow.length - plim} more)</button>`}
-    </div>`}
-    <h2>Delivery log</h2>
+    </div>`)}
+    ${part === "log" && h`<div>
     <label>Show<select value=${who} onChange=${e => setWho(e.target.value)}><option value="">Everyone</option>${emps.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}</select></label>
     <button class="ghost" style=${{ margin: "8px 0" }} onClick=${copy}>${copied ? "Copied" : "Copy deliveries as CSV (for Excel)"}</button>
     <details class="sd"><summary>Deliveries in this period (${shown.length})</summary>
@@ -1868,7 +1876,7 @@ function Payouts({ emps, raw, save, bump }) {
       <ul>${log.map((a, i) => h`<li key=${i} class="pk"><b>${AUD_TXT[a.type] || a.type}</b> · ${fmtDT(a.t)}${a.order != null && flagList(a.order).map(f => h` <span class="chip st-bad" key=${f}>${f}</span>`)}<p>${a.order != null ? orderNo(a.order) + " · " + trailLine(a) + (a.where ? " · " + a.where : "") + (a.cust ? " · " + a.cust : "") : line(a)}</p></li>`)}</ul>
       ${logAll.length === 0 && h`<p class="note">Nothing matches.</p>`}
       ${logAll.length > lg.n && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setLg({ ...lg, n: lg.n + 50 })}>Show more (${logAll.length - lg.n} more)</button>`}
-    </details>
+    </details></div>`}
   </div>`;
 }
 
@@ -1904,6 +1912,8 @@ function TeamAdmin() {
   const [nm, setNm] = useState(""), [mb, setMb] = useState(""), [sc, setSc] = useState([]), [pgs, setPgs] = useState(["del"]);
   const [err, setErr] = useState("");
   const [addOpen, setAddOpen] = useState(false), [tq, setTq] = useState(""), [tf, setTf] = useState("all"), [lim, setLim] = useState(10);
+  const [tab, setTabS] = useState(() => { try { return localStorage.getItem("wfb_teamtab") || "orders"; } catch (e) { return "orders"; } });
+  const setTab = k => { setTabS(k); try { localStorage.setItem("wfb_teamtab", k); } catch (e) {} };
   const [oq, setOq] = useState(""), [os, setOs] = useState("all"), [oa, setOa] = useState("all"), [osoc, setOsoc] = useState("all"), [olim, setOlim] = useState(20);
   const [grp, setGrp] = useState(true), [gopen, setGopen] = useState({}), [selMode, setSelMode] = useState(false), [sel, setSel] = useState([]), [bmsg, setBmsg] = useState("");
   void ver;
@@ -1937,11 +1947,15 @@ function TeamAdmin() {
   const nameOf = m => (emps.find(e => e.mobile === m) || {}).name || "Not assigned";
   const reassign = (o, m) => { audit("assigned", { ...orderTag(o), emp: m, from: o.assignedTo || "", by: "admin" }); patchOrder(o.id, x => ({ ...x, assignedTo: m })); setVer(v => v + 1); };
   const active = emps.filter(e => e.active);
+  const dueAll = raw.filter(o => !isOpen(o) && o.deliveredBy && o.deliveredBy !== "admin" && !o.paidAt).reduce((t, o) => { const e = emps.find(x => x.mobile === o.deliveredBy); return t + (o.payRate != null ? +o.payRate : (e && e.rate != null ? +e.rate || 0 : CFG.pay)); }, 0);
   const tt = tq.trim().toLowerCase();
   const list = emps.filter(e => (tf === "all" || (tf === "active") === !!e.active) && (!tt || e.name.toLowerCase().includes(tt) || e.mobile.includes(tt)));
   const listShown = list.slice(0, lim);
   return h`<div class="wrap adm">
     <header><h1>Delivery team</h1><p class="sub">Add employees, deactivate them, and see who has what.</p></header>
+    <div class="sumstrip"><span><b>${open.length}</b> pending</span><span class=${un.length ? "bad" : ""}><b>${un.length}</b> not assigned</span><span class=${dueAll > 0 ? "bad" : ""}><b>₹${dueAll}</b> unpaid</span></div>
+    <div class="tabs" role="tablist" aria-label="Delivery team sections">${[["orders", "Orders", un.length ? un.length + " unassigned" : ""], ["team", "Team", ""], ["pay", "Payouts", dueAll > 0 ? "₹" + dueAll + " due" : ""], ["log", "Log", ""]].map(([k, l, bdg]) => h`<button key=${k} role="tab" class="tab" aria-pressed=${tab === k} aria-selected=${tab === k} onClick=${() => setTab(k)}>${l}${bdg && h` <span class="tb">${bdg}</span>`}</button>`)}</div>
+    ${tab === "team" && h`<div>
     <button class=${addOpen ? "ghost" : "cta"} style=${{ width: "100%", marginBottom: 12 }} onClick=${() => setAddOpen(!addOpen)}>${addOpen ? "Close" : "+ Add an employee"}</button>
     ${addOpen && h`<div class="oc">
       <b>Add an employee</b>
@@ -1972,9 +1986,13 @@ function TeamAdmin() {
       </li>`;
     })}</ul>
     ${list.length > lim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setLim(lim + 10)}>Show more (${list.length - lim} more)</button>`}
-    <h2>How orders are assigned</h2>
+    <details class="sd"><summary>How orders are assigned</summary>
     <p class="note">Each new order goes automatically to an active employee who covers that society. If several do, the one with the fewest pending orders gets it. If none is set for the society, it goes to whoever has the fewest pending orders overall. When you deactivate someone, their pending orders move to the others. You can still change any order below.</p>
-    <${Payouts} emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />
+    </details>
+    </div>`}
+    ${tab === "pay" && h`<${Payouts} part="pay" emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />`}
+    ${tab === "log" && h`<${Payouts} part="log" emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />`}
+    ${tab === "orders" && h`<div>
     <h2>Pending orders (${open.length})</h2>
     ${un.length > 0 && h`<p class="note">${un.length} order${un.length > 1 ? "s are" : " is"} not assigned. <button class="lk" onClick=${() => { migrateOrders(); assignOpenOrders(); setVer(v => v + 1); }}>Assign automatically</button></p>`}
     ${open.length > 0 && h`<div>
@@ -2047,6 +2065,7 @@ function TeamAdmin() {
         })()}
       </div>`;
     })()}
+    </div>`}
     <p class="note">Employees see only their own orders. Orders placed on other phones will reach this list once the backend is connected.</p>
   </div>`;
 }
