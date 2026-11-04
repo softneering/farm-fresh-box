@@ -235,7 +235,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{fo
 .st-placed{--c:#1d6fd8}.st-packed{--c:#9a6700}.st-out{--c:#7c3aed}.st-delivered{--c:#1a7f4b}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .st-placed{--c:#6cb0ff}:root:not([data-theme="light"]) .st-packed{--c:#f2b84b}:root:not([data-theme="light"]) .st-out{--c:#b79cff}:root:not([data-theme="light"]) .st-delivered{--c:#5fd08f}}
 :root[data-theme="dark"] .st-placed{--c:#6cb0ff}:root[data-theme="dark"] .st-packed{--c:#f2b84b}:root[data-theme="dark"] .st-out{--c:#b79cff}:root[data-theme="dark"] .st-delivered{--c:#5fd08f}
-.oc[class*="st-"] .chip{color:var(--c);border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+[class*="st-"] .sch{color:var(--c);border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
 .oc[class*="st-"] .trk i.on{background:var(--c)}
 .trkl span.cur{color:var(--c);font-weight:700}
 </style>
@@ -812,7 +812,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         ${notice && h`<div class="banner"><span>✅</span><span>${notice}</span></div>`}
         ${orders.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🧾</div><p>No orders yet.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<ul>
           ${orders.map(o => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
-            <div class="top"><b>${fmtDate(o.t)}</b><span class="chip">${STAGES[stageIdx(o.status)][1]}</span></div>
+            <div class="top"><b>${fmtDate(o.t)}</b><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></div>
             <div class="trk" aria-hidden="true">${STAGES.map((st, k) => h`<i key=${st[0]} class=${k <= stageIdx(o.status) ? "on" : ""}></i>`)}</div>
             <div class="trkl" aria-hidden="true">${STAGES.map((st, k) => h`<span key=${st[0]} class=${k === stageIdx(o.status) ? "cur" : ""}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
             ${o.status === "delivered" && o.deliveredBy && o.deliveredBy !== "admin" && h`<p>Delivered by ${(findEmp(o.deliveredBy) || {}).name || "our delivery partner"}${o.deliveredAt ? " · " + fmtDate(o.deliveredAt) : ""}</p>`}
@@ -1137,9 +1137,9 @@ function Deliveries({ emp, onLogout }) {
     if (!e) { setOpen(null); setCode(""); setVer(v => v + 1); }
   };
   const addr = o => [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "Address not given";
-  const card = (o, isFree) => h`<li key=${o.id} class="oc">
+  const card = (o, isFree) => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
     <div class="top"><b>${addr(o)}</b><span class="chip">₹${o.total}</span></div>
-    <p class="note" style=${{ margin: "0 0 4px" }}>${STAGES[stageIdx(o.status)][1]}</p>
+    <p style=${{ margin: "0 0 6px" }}><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></p>
     <p>${o.name || "Customer"}${o.det ? " · " + o.det : ""}</p>
     ${o.phone && h`<p><a class="lk" href=${"tel:" + o.phone}>Call ${o.phone}</a></p>`}
     <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
@@ -1168,8 +1168,8 @@ function Deliveries({ emp, onLogout }) {
       ${free.length > 0 && h`<h2>Not assigned to anyone (${free.length})</h2><ul>${free.map(o => card(o, true))}</ul>`}
     </div>` : h`<div>
       ${done.length === 0 && h`<p class="note">You have not delivered any orders yet.</p>`}
-      <ul>${done.map(o => h`<li key=${o.id} class="oc">
-        <div class="top"><b>${addr(o)}</b><span class="chip">Delivered</span></div>
+      <ul>${done.map(o => h`<li key=${o.id} class="oc st-delivered">
+        <div class="top"><b>${addr(o)}</b><span class="chip sch">Delivered</span></div>
         <p>${o.name || "Customer"} · ₹${o.total}</p>
         <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
         <p class="note" style=${{ margin: 0 }}>${o.deliveredAt ? fmtDate(o.deliveredAt) : ""}</p>
@@ -1399,7 +1399,7 @@ function Admin({ staff }) {
       <textarea readOnly value=${out} style=${{ minHeight: 120 }}></textarea>
       <button class="cta" onClick=${copy}>${copied ? "Copied" : "Copy list"}</button>
       <h2>Packing list by flat</h2>
-      <ul>${sorted.map((o, i) => h`<li key=${i} class="pk">${(i === 0 || sorted[i - 1].soc !== o.soc) && h`<p style=${{ margin: "0 0 4px", color: "var(--leaf)", fontWeight: 700 }}>${o.soc || "Society not given"}</p>`}<b>${o.flat || "Flat not given"}</b> · ${o.name}${o.phone ? " · " + o.phone : ""}${o.det ? " · " + o.det : ""}
+      <ul>${sorted.map((o, i) => h`<li key=${i} class=${"pk" + (o.status ? " st-" + STAGES[stageIdx(o.status)][0] : "")}>${(i === 0 || sorted[i - 1].soc !== o.soc) && h`<p style=${{ margin: "0 0 4px", color: "var(--leaf)", fontWeight: 700 }}>${o.soc || "Society not given"}</p>`}<b>${o.flat || "Flat not given"}</b> · ${o.name}${o.phone ? " · " + o.phone : ""}${o.det ? " · " + o.det : ""}${o.status ? h` <span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span>` : ""}
         ${o.items.map((it, j) => h`<p key=${j}>${it.n}: ${it.q} × ${it.u}</p>`)}</li>`)}</ul>
     </div>`}
   </div>`;
@@ -1794,8 +1794,8 @@ function TeamAdmin() {
     <${Payouts} emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />
     <h2>Pending orders (${open.length})</h2>
     ${un.length > 0 && h`<p class="note">${un.length} order${un.length > 1 ? "s are" : " is"} not assigned. <button class="lk" onClick=${() => { migrateOrders(); assignOpenOrders(); setVer(v => v + 1); }}>Assign automatically</button></p>`}
-    <ul>${open.sort((a, b) => (a.soc || "").localeCompare(b.soc || "")).map(o => h`<li key=${o.id} class="pk">
-      <b>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b> · ${o.name} · ₹${o.total}
+    <ul>${open.sort((a, b) => (a.soc || "").localeCompare(b.soc || "")).map(o => h`<li key=${o.id} class=${"pk st-" + STAGES[stageIdx(o.status)][0]}>
+      <b>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b> · ${o.name} · ₹${o.total} <span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span>
       <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
       <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
         <option value="">Not assigned</option>
