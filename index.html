@@ -252,6 +252,14 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .bsum{margin:8px 0;font-size:14px;color:var(--mut)}
 .bsum>div{display:flex;justify-content:space-between;padding:2px 0}
 .spk{margin:10px 0}.spk .pgs{max-height:240px;overflow:auto}
+.emp{list-style:none}
+.emp>.sd>summary{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.emp .es{display:flex;flex-direction:column;min-width:0}
+.emp .es small{color:var(--mut);font-weight:400;font-size:13px}
+.po .porow{display:flex;gap:10px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.po .rt{margin:0;flex:1;min-width:150px}
+.po .rt span{font-size:13px;color:var(--mut);font-weight:600}
+.po .rt input{width:100%}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -1720,6 +1728,7 @@ function Payouts({ emps, raw, save, bump }) {
   const [conf, setConf] = useState("");
   const [copied, setCopied] = useState(false);
   const [pf, setPf] = useState("");
+  const [pv, setPv] = useState("due"), [pq, setPq] = useState(""), [plim, setPlim] = useState(8);
   const now = new Date();
   const start = range === "all" ? 0 : range === "month" ? new Date(now.getFullYear(), now.getMonth(), 1).getTime()
     : range === "today" ? new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
@@ -1753,6 +1762,9 @@ function Payouts({ emps, raw, save, bump }) {
     return (emp ? emp + " · " : "") + (a.where || "") + (a.from ? " (was " + nameOf(a.from) + ")" : "") + (a.by && a.by !== a.emp ? " · by " + nameOf(a.by) : "") + (a.note ? " · " + a.note : "");
   };
   const tot = rows.reduce((s, r) => s + r.due, 0);
+  const dueRows = rows.filter(r => r.due > 0).sort((a, b) => b.due - a.due);
+  const pt = pq.trim().toLowerCase();
+  const prow = (pv === "due" ? dueRows : [...rows].sort((a, b) => b.due - a.due || a.e.name.localeCompare(b.e.name))).filter(r => !pt || r.e.name.toLowerCase().includes(pt) || r.e.mobile.includes(pt));
   const amtOf = o => o.paidAt ? (o.paidAmt != null ? +o.paidAmt : 0) : (o.payRate != null ? +o.payRate : ((rows.find(r => r.e.mobile === o.deliveredBy) || {}).rate || 0));
   const shown = dels.filter(o => (!who || o.deliveredBy === who) && (pf === "" || (pf === "paid") === !!o.paidAt));
   const shownTot = shown.reduce((t, o) => t + amtOf(o), 0);
@@ -1762,13 +1774,21 @@ function Payouts({ emps, raw, save, bump }) {
     <div class="tabs" role="group" aria-label="Period">
       ${[["today", "Today"], ["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${range === k} onClick=${() => setRange(k)}>${l}</button>`)}
     </div>
-    ${emps.length === 0 ? h`<p class="note">Add employees to see their deliveries.</p>` : h`<ul>${rows.map(r => h`<li key=${r.e.mobile} class="oc">
-      <div class="top"><b>${r.e.name}</b><span class="chip">${r.mine.length} delivered</span></div>
-      <p>${r.un.length} not yet paid · ${r.mine.length - r.un.length} paid · orders worth ₹${r.value}</p>
-      <label>Pay per delivery from now on (₹)<input type="number" min="0" value=${r.e.rate == null ? CFG.pay : r.e.rate} onInput=${ev => setRate(r.e, ev.target.value)} /></label>
-      <div class="top"><b>Due: ₹${r.due}</b><button class="ghost" disabled=${r.due <= 0} onClick=${() => pay(r)}>${conf === r.e.mobile ? "Tap again to confirm" : "Mark as paid"}</button></div>
-    </li>`)}</ul>
-    <p class="note"><b>Total due for this period: ₹${tot}</b>. "Mark as paid" only records the payment here. You still send the money yourself (UPI or cash).</p>`}
+    ${emps.length === 0 ? h`<p class="note">Add employees to see their deliveries.</p>` : h`<div>
+      <div class="tabs" role="group" aria-label="Show payouts">${[["due", "Needs payment (" + dueRows.length + ")"], ["all", "Everyone (" + rows.length + ")"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${pv === k} onClick=${() => { setPv(k); setPlim(8); }}>${l}</button>`)}</div>
+      ${rows.length > 5 && h`<input type="search" value=${pq} onInput=${e => { setPq(e.target.value); setPlim(8); }} placeholder="Search employee" aria-label="Search payouts" />`}
+      <p class="note"><b>Total due for this period: ₹${tot}</b>${dueRows.length ? " across " + dueRows.length + " employee" + (dueRows.length > 1 ? "s" : "") : ""}. "Mark as paid" only records the payment here. You still send the money yourself (UPI or cash).</p>
+      ${prow.length === 0 && h`<p class="note">${pv === "due" ? "Nobody is waiting for payment in this period." : "No employees match."}</p>`}
+      <ul>${prow.slice(0, plim).map(r => h`<li key=${r.e.mobile} class="oc po">
+        <div class="top"><b>${r.e.name}</b><b class=${r.due > 0 ? "bad" : "good"}>${r.due > 0 ? "Due ₹" + r.due : "All paid"}</b></div>
+        <p>${r.un.length} unpaid · ${r.mine.length - r.un.length} paid · orders worth ₹${r.value}</p>
+        <div class="porow">
+          <label class="rt"><span>₹ per delivery from now on</span><input type="number" min="0" value=${r.e.rate == null ? CFG.pay : r.e.rate} onInput=${ev => setRate(r.e, ev.target.value)} /></label>
+          <button class="ghost" disabled=${r.due <= 0} onClick=${() => pay(r)}>${conf === r.e.mobile ? "Tap again to confirm" : "Mark as paid"}</button>
+        </div>
+      </li>`)}</ul>
+      ${prow.length > plim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setPlim(plim + 8)}>Show more (${prow.length - plim} more)</button>`}
+    </div>`}
     <h2>Delivery log</h2>
     <label>Show<select value=${who} onChange=${e => setWho(e.target.value)}><option value="">Everyone</option>${emps.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}</select></label>
     <button class="ghost" style=${{ margin: "8px 0" }} onClick=${copy}>${copied ? "Copied" : "Copy deliveries as CSV (for Excel)"}</button>
@@ -1816,6 +1836,7 @@ function TeamAdmin() {
   const [ver, setVer] = useState(0);
   const [nm, setNm] = useState(""), [mb, setMb] = useState(""), [sc, setSc] = useState([]), [pgs, setPgs] = useState(["del"]);
   const [err, setErr] = useState("");
+  const [addOpen, setAddOpen] = useState(false), [tq, setTq] = useState(""), [tf, setTf] = useState("all"), [lim, setLim] = useState(10);
   void ver;
   const emps = loadEmps();
   const raw = allRawOrders();
@@ -1828,7 +1849,7 @@ function TeamAdmin() {
     if (ADMIN_MOBILES.includes(mobile)) return setErr("This number is the admin number. Use a different number for the employee.");
     audit("employee_added", { emp: mobile, name: nm.trim(), pages: pgs, by: "admin" });
     save([...emps, { mobile, pages: pgs.length ? pgs : ["del"], name: nm.trim(), active: true, socs: sc, t: Date.now() }]);
-    setNm(""); setMb(""); setSc([]); setPgs(["del"]); setErr("");
+    setNm(""); setMb(""); setSc([]); setPgs(["del"]); setErr(""); setAddOpen(false);
     assignOpenOrders(); setVer(v => v + 1);
   };
   const toggle = e => {
@@ -1847,9 +1868,13 @@ function TeamAdmin() {
   const nameOf = m => (emps.find(e => e.mobile === m) || {}).name || "Not assigned";
   const reassign = (o, m) => { audit("assigned", { ...orderTag(o), emp: m, from: o.assignedTo || "", by: "admin" }); patchOrder(o.id, x => ({ ...x, assignedTo: m })); setVer(v => v + 1); };
   const active = emps.filter(e => e.active);
+  const tt = tq.trim().toLowerCase();
+  const list = emps.filter(e => (tf === "all" || (tf === "active") === !!e.active) && (!tt || e.name.toLowerCase().includes(tt) || e.mobile.includes(tt)));
+  const listShown = list.slice(0, lim);
   return h`<div class="wrap adm">
     <header><h1>Delivery team</h1><p class="sub">Add employees, deactivate them, and see who has what.</p></header>
-    <div class="oc">
+    <button class=${addOpen ? "ghost" : "cta"} style=${{ width: "100%", marginBottom: 12 }} onClick=${() => setAddOpen(!addOpen)}>${addOpen ? "Close" : "+ Add an employee"}</button>
+    ${addOpen && h`<div class="oc">
       <b>Add an employee</b>
       <label>Name<input value=${nm} onInput=${e => { setNm(e.target.value); setErr(""); }} /></label>
       <label>Mobile number<input inputMode="numeric" maxLength="10" value=${mb} onInput=${e => { setMb(e.target.value.replace(/\D/g, "")); setErr(""); }} /></label>
@@ -1858,19 +1883,26 @@ function TeamAdmin() {
       <${PageChecks} val=${pgs} onChange=${setPgs} />
       ${err && h`<p class="err" role="alert">${err}</p>`}
       <button class="cta" onClick=${add}>Add employee</button>
-    </div>
-    <h2>Team (${active.length} active)</h2>
+    </div>`}
+    <h2>Team (${active.length} active${emps.length > active.length ? ", " + (emps.length - active.length) + " deactivated" : ""})</h2>
     ${emps.length === 0 && h`<p class="note">No employees yet. Until you add one, orders stay unassigned.</p>`}
-    <ul>${emps.map(e => {
+    ${emps.length > 0 && h`<div>
+      ${emps.length > 5 && h`<input type="search" value=${tq} onInput=${e => { setTq(e.target.value); setLim(10); }} placeholder="Search by name or mobile" aria-label="Search employees" />`}
+      <div class="tabs" role="group" aria-label="Show employees">${[["all", "All (" + emps.length + ")"], ["active", "Active (" + active.length + ")"], ["off", "Deactivated (" + (emps.length - active.length) + ")"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${tf === k} onClick=${() => { setTf(k); setLim(10); }}>${l}</button>`)}</div>
+    </div>`}
+    ${emps.length > 0 && list.length === 0 && h`<p class="note">No employees match.</p>`}
+    <ul>${listShown.map(e => {
       const p = open.filter(o => o.assignedTo === e.mobile).length, d = raw.filter(o => !isOpen(o) && o.deliveredBy === e.mobile).length;
-      return h`<li key=${e.mobile} class="oc">
-        <div class="top"><b>${e.name} · +91 ${e.mobile}</b><span class=${"chip " + (e.active ? "st-ok" : "st-bad")}>${e.active ? "Active" : "Deactivated"}</span></div>
-        <p>${p} pending · ${d} delivered</p>
-        <${SocPicker} value=${e.socs || []} onChange=${v => setSocs(e, v)} />
-        <details class="sd"><summary>Pages: ${pagesOf(e).map(k => PAGES.find(x => x[0] === k)[1]).join(", ")}</summary><${PageChecks} val=${pagesOf(e)} onChange=${v => setPages(e, v)} /></details>
-        <button class="ghost" onClick=${() => toggle(e)}>${e.active ? "Deactivate" : "Activate again"}</button>
+      return h`<li key=${e.mobile} class="emp">
+        <details class="sd">
+          <summary><span class="es"><b>${e.name}</b><small>+91 ${e.mobile} · ${p} pending · ${d} delivered</small></span><span class=${"chip " + (e.active ? "st-ok" : "st-bad")}>${e.active ? "Active" : "Deactivated"}</span></summary>
+          <${SocPicker} value=${e.socs || []} onChange=${v => setSocs(e, v)} />
+          <details class="sd"><summary>Pages: ${pagesOf(e).map(k => PAGES.find(x => x[0] === k)[1]).join(", ")}</summary><${PageChecks} val=${pagesOf(e)} onChange=${v => setPages(e, v)} /></details>
+          <button class="ghost" onClick=${() => toggle(e)}>${e.active ? "Deactivate" : "Activate again"}</button>
+        </details>
       </li>`;
     })}</ul>
+    ${list.length > lim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setLim(lim + 10)}>Show more (${list.length - lim} more)</button>`}
     <h2>How orders are assigned</h2>
     <p class="note">Each new order goes automatically to an active employee who covers that society. If several do, the one with the fewest pending orders gets it. If none is set for the society, it goes to whoever has the fewest pending orders overall. When you deactivate someone, their pending orders move to the others. You can still change any order below.</p>
     <${Payouts} emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />
