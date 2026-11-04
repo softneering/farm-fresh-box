@@ -279,6 +279,7 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .trail{list-style:none;margin:6px 0;padding:0;font-size:14px}
 .trail li{padding:5px 0;border-bottom:1px dashed var(--line,rgba(128,128,128,.3))}
 .trail li span{display:block;color:var(--mut);font-size:12px}
+.ono{margin:2px 0 6px;font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.03em}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -765,19 +766,20 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
   const deals = ITEMS.filter(i => i.mrp > i.p).sort((a, b) => (b.mrp - b.p) / b.mrp - (a.mrp - a.p) / a.mrp).slice(0, 6);
 
   const send = () => {
-    const msg = ["New order: " + CFG.brand, "Name: " + profile.name, "Society: " + (soc ? soc.name : ""), "Address: " + [profile.flat, profile.bld].filter(Boolean).join(", "), ...[profile.det ? "Details: " + profile.det : "", soc && soc.drop ? "Drop point: " + soc.drop : "", f.phone ? "Phone: " + f.phone : ""].filter(Boolean), "",
+    const oid = Date.now();
+    const msg = ["New order: " + CFG.brand + " " + orderNo(oid), "Name: " + profile.name, "Society: " + (soc ? soc.name : ""), "Address: " + [profile.flat, profile.bld].filter(Boolean).join(", "), ...[profile.det ? "Details: " + profile.det : "", soc && soc.drop ? "Drop point: " + soc.drop : "", f.phone ? "Phone: " + f.phone : ""].filter(Boolean), "",
       ...lines.map(l => "• " + l.n + ": " + l.q + " × " + l.u + " = ₹" + l.q * l.p),
       "", "Total weight: " + kgR + " kg", "Items: ₹" + sub, save > 0 ? "Saved vs local prices: ₹" + save : "", "Delivery: ₹" + fee, "Total: ₹" + total, "Delivery: " + dayText,
       f.note ? "Note: " + f.note : ""].filter((x, i, a) => x !== "" || a[i - 1] !== "").join("\n");
     window.open("https://wa.me/" + CFG.wa + "?text=" + encodeURIComponent(msg), "_blank");
-    const o = { id: Date.now(), t: Date.now(), status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p, mrp: l.mrp })), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : "") };
+    const o = { id: oid, t: oid, status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p, mrp: l.mrp })), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : "") };
     const next = [o, ...orders].slice(0, 30);
     setOrders(next); lsSet(OK, next);
     track("order", { total, items: lines.length, society: soc ? soc.name : "" });
     audit("placed", { ...orderTag(o), by: "customer" });
     if (o.assignedTo) audit("assigned", { ...orderTag(o), emp: o.assignedTo, by: "auto" });
     setCart({}); setF({ ...f, note: "" });
-    setNotice("Your order was sent on WhatsApp. We will confirm it there.");
+    setNotice("Your order " + orderNo(oid) + " was sent on WhatsApp. We will confirm it there.");
     go("orders");
   };
   const reorder = o => {
@@ -861,6 +863,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         ${orders.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🧾</div><p>No orders yet.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<ul>
           ${orders.map(o => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
             <div class="top"><b>${fmtDate(o.t)}</b><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></div>
+            <p class="ono">Order ${orderNo(o)}</p>
             <div class="trk" aria-hidden="true">${STAGES.map((st, k) => h`<i key=${st[0]} class=${k <= stageIdx(o.status) ? "on" : ""}></i>`)}</div>
             <div class="trkl" aria-hidden="true">${STAGES.map((st, k) => h`<span key=${st[0]} class=${k === stageIdx(o.status) ? "cur" : ""}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
             ${o.status === "delivered" && o.deliveredBy && o.deliveredBy !== "admin" && h`<p>Delivered by ${(findEmp(o.deliveredBy) || {}).name || "our delivery partner"}${o.deliveredAt ? " · " + fmtDate(o.deliveredAt) : ""}</p>`}
@@ -1113,6 +1116,8 @@ function audit(type, d) {
   lsSet(AUK, l.slice(-20000));
 }
 const orderTag = o => ({ order: o.id, where: [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "", total: o.total, cust: o.name || "" });
+// Short order number shown everywhere (derived from the order id so it is the same on every screen)
+const orderNo = o => "#" + Number(o && o.id != null ? o.id : o).toString(36).toUpperCase().slice(-6);
 const STAGES = [["placed", "Placed"], ["packed", "Packed"], ["out", "Out for delivery"], ["delivered", "Delivered"]];
 const stageIdx = st => Math.max(0, STAGES.findIndex(x => x[0] === (st || "placed")));
 function setStage(o, st, by) {
@@ -1206,6 +1211,7 @@ function Deliveries({ emp, onLogout }) {
   const addr = o => [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "Address not given";
   const card = (o, isFree) => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
     <div class="top"><b>${addr(o)}</b><span class="chip">₹${o.total}</span></div>
+    <p class="ono">Order ${orderNo(o)}</p>
     <p style=${{ margin: "0 0 6px" }}><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></p>
     <p>${o.name || "Customer"}${o.det ? " · " + o.det : ""}</p>
     ${o.phone && h`<p><a class="lk" href=${"tel:" + o.phone}>Call ${o.phone}</a></p>`}
@@ -1243,6 +1249,7 @@ function Deliveries({ emp, onLogout }) {
       ${done.length === 0 && h`<p class="note">You have not delivered any orders yet.</p>`}
       <ul>${done.map(o => h`<li key=${o.id} class="oc st-delivered">
         <div class="top"><b>${addr(o)}</b><span class="chip sch">Delivered</span></div>
+        <p class="ono">Order ${orderNo(o)}</p>
         <p>${o.name || "Customer"} · ₹${o.total}</p>
         <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
         <p><span class=${"chip " + (o.paidAt ? "st-ok" : "st-bad")}>${o.paidAt ? "Paid" : "Unpaid"}</span> ₹${amtOf(o)}${o.paidAt ? " · paid on " + fmtDate(o.paidAt) : " · due"}</p>
@@ -1805,7 +1812,7 @@ function Payouts({ emps, raw, save, bump }) {
   const flagList = o => { const f = flagsFor[o] || {}; return [f.re >= 2 && "Reassigned " + f.re + "×", f.wr >= 3 && f.wr + " wrong codes", f.to && "Not the assignee"].filter(Boolean); };
   const lq = lg.q.trim().toLowerCase();
   const logAll = allLog.filter(a => (!who || a.emp === who) && (!lg.t || (lg.t === "flag" ? a.order != null && flagList(a.order).length > 0 : a.type === lg.t))
-    && (!lq || [a.order, a.where, a.cust, a.name, a.emp && nameOf(a.emp), a.by && nameOf(a.by), a.from && nameOf(a.from)].some(f => String(f == null ? "" : f).toLowerCase().includes(lq)))).reverse();
+    && (!lq || [a.order, a.order != null && orderNo(a.order), a.where, a.cust, a.name, a.emp && nameOf(a.emp), a.by && nameOf(a.by), a.from && nameOf(a.from)].some(f => String(f == null ? "" : f).toLowerCase().includes(lq)))).reverse();
   const log = logAll.slice(0, lg.n);
   const line = a => {
     const emp = a.emp ? nameOf(a.emp) : "";
@@ -1851,14 +1858,14 @@ function Payouts({ emps, raw, save, bump }) {
         ${[["", "All"], ["unpaid", "Unpaid"], ["paid", "Paid"]].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${pf === k} onClick=${() => setPf(k)}>${l}</button>`)}
       </div>
       <p class="note"><b>${shown.length} deliveries · ₹${shownTot}</b>${pf === "" ? " (paid and unpaid together)" : pf === "paid" ? " paid" : " still to pay"}</p>
-      <ul>${shown.map(o => h`<li key=${o.id} class="pk"><b>${fmtDT(o.deliveredAt)}</b> · ${nameOf(o.deliveredBy)}<p>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")} · ${o.name} · ₹${o.total} · code verified</p><p><span class=${"chip " + (o.paidAt ? "st-ok" : "st-bad")}>${o.paidAt ? "Paid" : "Unpaid"}</span> ₹${amtOf(o)}${o.paidAt ? " · paid on " + fmtDT(o.paidAt) : " · due"}</p><${OrderTrail} id=${o.id} /></li>`)}</ul>
+      <ul>${shown.map(o => h`<li key=${o.id} class="pk"><b>${fmtDT(o.deliveredAt)}</b> · ${nameOf(o.deliveredBy)}<p>${orderNo(o)} · ${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")} · ${o.name} · ₹${o.total} · code verified</p><p><span class=${"chip " + (o.paidAt ? "st-ok" : "st-bad")}>${o.paidAt ? "Paid" : "Unpaid"}</span> ₹${amtOf(o)}${o.paidAt ? " · paid on " + fmtDT(o.paidAt) : " · due"}</p><${OrderTrail} id=${o.id} /></li>`)}</ul>
     </details>
     <details class="sd"><summary>Activity history (${logAll.length})</summary>
       <input type="search" value=${lg.q} onInput=${e => setLg({ ...lg, q: e.target.value, n: 50 })} placeholder="Search flat, order number, customer or employee" aria-label="Search activity" />
       <label>Show<select value=${lg.t} onChange=${e => setLg({ ...lg, t: e.target.value, n: 50 })}>
         <option value="">All activity</option><option value="flag">Orders to look at (flagged)</option><option value="assigned">Assigned or reassigned</option><option value="status">Status changes</option><option value="wrong_code">Wrong codes</option><option value="locked">Locked orders</option><option value="taken_over">Not the assignee</option><option value="delivered">Delivered</option><option value="placed">Orders placed</option>
       </select></label>
-      <ul>${log.map((a, i) => h`<li key=${i} class="pk"><b>${AUD_TXT[a.type] || a.type}</b> · ${fmtDT(a.t)}${a.order != null && flagList(a.order).map(f => h` <span class="chip st-bad" key=${f}>${f}</span>`)}<p>${a.order != null ? "#" + String(a.order).slice(-5) + " · " + trailLine(a) + (a.where ? " · " + a.where : "") + (a.cust ? " · " + a.cust : "") : line(a)}</p></li>`)}</ul>
+      <ul>${log.map((a, i) => h`<li key=${i} class="pk"><b>${AUD_TXT[a.type] || a.type}</b> · ${fmtDT(a.t)}${a.order != null && flagList(a.order).map(f => h` <span class="chip st-bad" key=${f}>${f}</span>`)}<p>${a.order != null ? orderNo(a.order) + " · " + trailLine(a) + (a.where ? " · " + a.where : "") + (a.cust ? " · " + a.cust : "") : line(a)}</p></li>`)}</ul>
       ${logAll.length === 0 && h`<p class="note">Nothing matches.</p>`}
       ${logAll.length > lg.n && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setLg({ ...lg, n: lg.n + 50 })}>Show more (${logAll.length - lg.n} more)</button>`}
     </details>
@@ -1990,7 +1997,7 @@ function TeamAdmin() {
       const fl = open.filter(o => (os === "all" || (stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]) === os)
         && (oa === "all" || (oa === "none" ? isUn(o) : o.assignedTo === oa))
         && (osoc === "all" || (o.soc || "") === osoc)
-        && (!qq || [o.name, o.soc, o.bld, o.unit, o.phone, o.otp, o.flat].some(f => String(f || "").toLowerCase().includes(qq))))
+        && (!qq || [o.name, o.soc, o.bld, o.unit, o.phone, o.otp, o.flat, orderNo(o)].some(f => String(f || "").toLowerCase().includes(qq))))
         .sort((a, b) => (a.soc || "").localeCompare(b.soc || "") || String(a.unit || "").localeCompare(String(b.unit || ""), undefined, { numeric: true }));
       return h`<div>
         ${open.length > 0 && h`<p class="note">${fl.length === open.length ? "Showing all " + open.length : "Showing " + fl.length + " of " + open.length}${(os !== "all" || oa !== "all" || osoc !== "all" || qq) ? h` · <button class="lk" onClick=${() => { setOq(""); setOs("all"); setOa("all"); setOsoc("all"); setOlim(20); }}>Clear filters</button>` : ""}</p>`}
@@ -2016,7 +2023,7 @@ function TeamAdmin() {
           const row = o => h`<li key=${o.id} class=${"pk rowsel st-" + STAGES[stageIdx(o.status)][0]}>
             ${selMode && h`<input type="checkbox" class="sc" aria-label=${"Select order " + (o.unit || o.id)} checked=${sel.includes(o.id)} onChange=${() => setSel(sel.includes(o.id) ? sel.filter(x => x !== o.id) : [...sel, o.id])} />`}
             <details class="sd">
-              <summary><span class="es"><b>${grp ? [o.bld, o.unit].filter(Boolean).join(", ") || o.flat : [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b><small>${o.name || "Customer"} · ₹${o.total} · ${isUn(o) ? "Not assigned" : nameOf(o.assignedTo)}</small></span><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></summary>
+              <summary><span class="es"><b>${grp ? [o.bld, o.unit].filter(Boolean).join(", ") || o.flat : [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b><small>${orderNo(o)} · ${o.name || "Customer"} · ₹${o.total} · ${isUn(o) ? "Not assigned" : nameOf(o.assignedTo)}</small></span><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></summary>
               <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
               <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
                 <option value="">Not assigned</option>
