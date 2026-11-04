@@ -1146,6 +1146,12 @@ function Deliveries({ emp, onLogout }) {
   const done = all.filter(o => !isOpen(o) && o.deliveredBy === emp.mobile).sort((a, b) => (b.deliveredAt || 0) - (a.deliveredAt || 0));
   const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
   const doneToday = done.filter(o => (o.deliveredAt || 0) >= dayStart.getTime());
+  const myRate = cur.rate == null ? CFG.pay : +cur.rate || 0;
+  const amtOf = o => o.paidAt ? (o.paidAmt != null ? +o.paidAmt : 0) : (o.payRate != null ? +o.payRate : myRate);
+  const sum = l => l.reduce((t, o) => t + amtOf(o), 0);
+  const weekStart = new Date(dayStart); weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const doneWeek = done.filter(o => (o.deliveredAt || 0) >= weekStart.getTime());
+  const unpaidL = done.filter(o => !o.paidAt), paidL = done.filter(o => o.paidAt);
   const take = o => { patchOrder(o.id, x => ({ ...x, assignedTo: emp.mobile })); audit("assigned", { ...orderTag(o), emp: emp.mobile, by: emp.mobile, claimed: true }); setVer(v => v + 1); };
   const submit = o => {
     if (!/^\d{4}$/.test(code)) { setErr("Enter the 4-digit code."); return; }
@@ -1173,12 +1179,18 @@ function Deliveries({ emp, onLogout }) {
     <div class="sm">
       <div><b>${mine.length}</b><span>to deliver</span></div>
       <div><b>${doneToday.length}</b><span>delivered today</span></div>
-      <div><b>₹${doneToday.reduce((s2, o) => s2 + (+o.total || 0), 0)}</b><span>order value today</span></div>
+      <div><b>₹${sum(doneToday)}</b><span>earned today</span></div>
     </div>
     <div class="tabs" role="group" aria-label="Deliveries">
       <button class="tab" aria-pressed=${tab === "pending"} onClick=${() => setTab("pending")}>Pending (${mine.length})</button>
       <button class="tab" aria-pressed=${tab === "done"} onClick=${() => setTab("done")}>Delivered (${done.length})</button>
     </div>
+    ${tab === "done" && h`<div class="sm">
+      <div><b>₹${sum(doneWeek)}</b><span>this week</span></div>
+      <div><b>₹${sum(unpaidL)}</b><span>to be paid</span></div>
+      <div><b>₹${sum(paidL)}</b><span>paid so far</span></div>
+    </div>
+    <p class="note">Your pay is ₹${myRate} per delivery from now on. Earlier deliveries keep the rate they had. Payment status is saved on the device where the admin marks it paid.</p>`}
     ${tab === "pending" ? h`<div>
       ${mine.length === 0 && h`<p class="note">No pending deliveries assigned to you.</p>`}
       <ul>${mine.map(o => card(o, false))}</ul>
@@ -1189,6 +1201,7 @@ function Deliveries({ emp, onLogout }) {
         <div class="top"><b>${addr(o)}</b><span class="chip sch">Delivered</span></div>
         <p>${o.name || "Customer"} · ₹${o.total}</p>
         <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
+        <p><span class=${"chip " + (o.paidAt ? "st-ok" : "st-bad")}>${o.paidAt ? "Paid" : "Unpaid"}</span> ₹${amtOf(o)}${o.paidAt ? " · paid on " + fmtDate(o.paidAt) : " · due"}</p>
         <p class="note" style=${{ margin: 0 }}>${o.deliveredAt ? fmtDate(o.deliveredAt) : ""}</p>
       </li>`)}</ul>
     </div>`}
