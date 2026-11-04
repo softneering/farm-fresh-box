@@ -246,6 +246,11 @@ input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{fo
 p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:normal;text-align:left;font-weight:700}
 .otp button{font-size:16px;letter-spacing:normal;padding:12px 16px;flex:1}
 .otp label{letter-spacing:normal;font-size:15px;font-weight:700;text-align:left}
+.bl{list-style:none;margin:8px 0;padding:0;font-size:14px}
+.bl li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line,rgba(128,128,128,.3))}
+.bl li span{color:var(--mut)}
+.bsum{margin:8px 0;font-size:14px;color:var(--mut)}
+.bsum>div{display:flex;justify-content:space-between;padding:2px 0}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -737,7 +742,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
       "", "Total weight: " + kgR + " kg", "Items: ₹" + sub, save > 0 ? "Saved vs local prices: ₹" + save : "", "Delivery: ₹" + fee, "Total: ₹" + total, "Delivery: " + dayText,
       f.note ? "Note: " + f.note : ""].filter((x, i, a) => x !== "" || a[i - 1] !== "").join("\n");
     window.open("https://wa.me/" + CFG.wa + "?text=" + encodeURIComponent(msg), "_blank");
-    const o = { id: Date.now(), t: Date.now(), status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p })), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : "") };
+    const o = { id: Date.now(), t: Date.now(), status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p, mrp: l.mrp })), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : "") };
     const next = [o, ...orders].slice(0, 30);
     setOrders(next); lsSet(OK, next);
     track("order", { total, items: lines.length, society: soc ? soc.name : "" });
@@ -830,10 +835,15 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
             <div class="trk" aria-hidden="true">${STAGES.map((st, k) => h`<i key=${st[0]} class=${k <= stageIdx(o.status) ? "on" : ""}></i>`)}</div>
             <div class="trkl" aria-hidden="true">${STAGES.map((st, k) => h`<span key=${st[0]} class=${k === stageIdx(o.status) ? "cur" : ""}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
             ${o.status === "delivered" && o.deliveredBy && o.deliveredBy !== "admin" && h`<p>Delivered by ${(findEmp(o.deliveredBy) || {}).name || "our delivery partner"}${o.deliveredAt ? " · " + fmtDate(o.deliveredAt) : ""}</p>`}
-            <p>${o.lines.map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
+            <ul class="bl">${o.lines.map(l => h`<li key=${l.id}><span>${l.n} · ${l.q} ${l.u} × ₹${l.p}</span><b>₹${l.q * l.p}</b></li>`)}</ul>
             ${o.soc && h`<p>Deliver to: ${[o.soc, o.bld, o.unit].filter(Boolean).join(", ")}</p>`}
             ${o.status !== "delivered" && o.otp && h`<div class="dcode"><span>Delivery code</span><b>${o.otp}</b><small>Tell this code to the delivery person only when you receive your order.</small></div>`}
-            <div class="top"><b>₹${o.total}</b><button class="add" onClick=${() => reorder(o)}>Reorder</button></div>
+            <div class="bsum">
+              <div><span>Items</span><span>₹${o.sub != null ? o.sub : o.lines.reduce((t, l) => t + l.q * l.p, 0)}</span></div>
+              <div><span>Delivery</span><span>${o.fee > 0 ? "₹" + o.fee : "Free"}</span></div>
+              ${orderSave(o) > 0 && h`<div class="good"><span>You saved vs local prices</span><span>₹${orderSave(o)}</span></div>`}
+            </div>
+            <div class="top"><b>Total ₹${o.total}</b><button class="add" onClick=${() => reorder(o)}>Reorder</button></div>
           </li>`)}
         </ul>`}
         <p class="note" style=${{ marginTop: 14 }}>Order history is saved on this device only.</p>
@@ -1101,6 +1111,11 @@ function assignOpenOrders() {
   });
 }
 // Old orders placed before delivery codes existed get one
+// Savings on a past order: saved at order time, or worked out from the catalogue's local price for older orders
+function orderSave(o) {
+  if (o.save != null) return +o.save || 0;
+  return (o.lines || []).reduce((t, l) => { const m = l.mrp != null ? +l.mrp : +((ITEMS.find(i => i.id === l.id) || {}).mrp || 0); return t + (m > l.p ? l.q * (m - l.p) : 0); }, 0);
+}
 function migrateOrders() {
   allRawOrders().filter(o => isOpen(o) && !o.otp).forEach(o => patchOrder(o.id, x => ({ ...x, otp: newOtp() })));
 }
