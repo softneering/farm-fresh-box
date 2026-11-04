@@ -1787,18 +1787,27 @@ function Payouts({ emps, raw, save, bump }) {
 
 // Tick-list of societies for an employee. value = array of society names; empty means every society.
 function SocPicker({ value, onChange }) {
-  const names = SOCIETIES.map(x => x.name);
-  const low = names.map(x => x.toLowerCase());
-  const gone = (value || []).filter(v => !low.includes(String(v).toLowerCase().trim()));
-  const has = n => (value || []).some(v => String(v).toLowerCase().trim() === n.toLowerCase());
-  const toggle = n => onChange(has(n) ? value.filter(v => String(v).toLowerCase().trim() !== n.toLowerCase()) : [...(value || []), n]);
-  const cnt = (value || []).length;
+  const [q, setQ] = useState("");
+  const val = value || [];
+  const norm = v => String(v).toLowerCase().trim();
+  const low = SOCIETIES.map(x => x.name.toLowerCase());
+  const gone = val.filter(v => !low.includes(norm(v)));
+  const has = n => val.some(v => norm(v) === n.toLowerCase());
+  const toggle = n => onChange(has(n) ? val.filter(v => norm(v) !== n.toLowerCase()) : [...val, n]);
+  const t = q.trim().toLowerCase();
+  const shown = SOCIETIES.filter(x => !t || [x.name, x.area, x.pincode].some(f => String(f || "").toLowerCase().includes(t))).map(x => x.name);
+  const shownGone = gone.filter(n => !t || n.toLowerCase().includes(t));
+  const cnt = val.length;
   return h`<div class="spk">
     <div class="top"><b>Societies they cover</b><span class="note" style=${{ margin: 0 }}>${cnt === 0 ? "All societies" : cnt + " selected"}</span></div>
-    ${names.length === 0 && h`<p class="note">Add societies in the Societies tab first. Until then this employee covers everyone.</p>`}
-    <div class="pgs">${names.map(n => h`<label key=${n} class="pk2"><input type="checkbox" checked=${has(n)} onChange=${() => toggle(n)} /><span><b>${n}</b></span></label>`)}
-      ${gone.map(n => h`<label key=${"x" + n} class="pk2"><input type="checkbox" checked=${true} onChange=${() => onChange(value.filter(v => v !== n))} /><span><b>${n}</b><small>(removed) not in your societies list. Untick to drop it.</small></span></label>`)}</div>
-    ${names.length > 0 && h`<div style=${{ display: "flex", gap: 8, margin: "6px 0" }}><button type="button" class="lk" onClick=${() => onChange([...names])}>Select all</button><button type="button" class="lk" onClick=${() => onChange([])}>Clear</button></div>`}
+    ${SOCIETIES.length === 0 && h`<p class="note">Add societies in the Societies tab first. Until then this employee covers everyone.</p>`}
+    ${SOCIETIES.length > 0 && h`<input type="search" value=${q} onInput=${e => setQ(e.target.value)} placeholder="Search societies" aria-label="Search societies" />`}
+    <div class="pgs">${shown.map(n => h`<label key=${n} class="pk2"><input type="checkbox" checked=${has(n)} onChange=${() => toggle(n)} /><span><b>${n}</b></span></label>`)}
+      ${shownGone.map(n => h`<label key=${"x" + n} class="pk2"><input type="checkbox" checked=${true} onChange=${() => onChange(val.filter(v => v !== n))} /><span><b>${n}</b><small>(removed) not in your societies list. Untick to drop it.</small></span></label>`)}
+      ${t && shown.length === 0 && shownGone.length === 0 && h`<p class="note">No society matches "${q.trim()}".</p>`}</div>
+    ${SOCIETIES.length > 0 && h`<div style=${{ display: "flex", gap: 8, margin: "6px 0" }}>
+      <button type="button" class="lk" onClick=${() => onChange([...new Set([...val, ...shown])])}>${t ? "Select shown" : "Select all"}</button>
+      <button type="button" class="lk" onClick=${() => onChange(t ? val.filter(v => !shown.some(n => n.toLowerCase() === norm(v)) && !shownGone.includes(v)) : [])}>${t ? "Clear shown" : "Clear"}</button></div>`}
     <p class="note" style=${{ margin: 0 }}>Leave all unticked to let this employee get orders from any society.</p>
   </div>`;
 }
