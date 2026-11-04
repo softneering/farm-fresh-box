@@ -260,6 +260,14 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .po .rt{margin:0;flex:1;min-width:150px}
 .po .rt span{font-size:13px;color:var(--mut);font-weight:600}
 .po .rt input{width:100%}
+.pk>.sd{border:0;padding:0;margin:0;background:transparent}
+.adm input[type=search]{width:100%;box-sizing:border-box}
+.fl2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl2 label{margin:0}
+@media (max-width:360px){.fl2{grid-template-columns:1fr}}
+.pk>.sd>summary{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pk .es{display:flex;flex-direction:column;min-width:0}
+.pk .es small{color:var(--mut);font-weight:400;font-size:13px}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -1837,6 +1845,7 @@ function TeamAdmin() {
   const [nm, setNm] = useState(""), [mb, setMb] = useState(""), [sc, setSc] = useState([]), [pgs, setPgs] = useState(["del"]);
   const [err, setErr] = useState("");
   const [addOpen, setAddOpen] = useState(false), [tq, setTq] = useState(""), [tf, setTf] = useState("all"), [lim, setLim] = useState(10);
+  const [oq, setOq] = useState(""), [os, setOs] = useState("all"), [oa, setOa] = useState("all"), [osoc, setOsoc] = useState("all"), [olim, setOlim] = useState(20);
   void ver;
   const emps = loadEmps();
   const raw = allRawOrders();
@@ -1908,14 +1917,45 @@ function TeamAdmin() {
     <${Payouts} emps=${emps} raw=${raw} save=${save} bump=${() => setVer(v => v + 1)} />
     <h2>Pending orders (${open.length})</h2>
     ${un.length > 0 && h`<p class="note">${un.length} order${un.length > 1 ? "s are" : " is"} not assigned. <button class="lk" onClick=${() => { migrateOrders(); assignOpenOrders(); setVer(v => v + 1); }}>Assign automatically</button></p>`}
-    <ul>${open.sort((a, b) => (a.soc || "").localeCompare(b.soc || "")).map(o => h`<li key=${o.id} class=${"pk st-" + STAGES[stageIdx(o.status)][0]}>
-      <b>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b> · ${o.name} · ₹${o.total} <span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span>
-      <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
-      <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
-        <option value="">Not assigned</option>
-        ${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}
-      </select></label>
-    </li>`)}</ul>
+    ${open.length > 0 && h`<div>
+      <input type="search" value=${oq} onInput=${e => { setOq(e.target.value); setOlim(20); }} placeholder="Search name, flat, phone, code or society" aria-label="Search pending orders" />
+      <div class="tabs" role="group" aria-label="Order status">${[["all", "All"], ...STAGES.slice(0, 3).map(st => [st[0], st[1]])].map(([k, l]) => h`<button key=${k} class="tab" aria-pressed=${os === k} onClick=${() => { setOs(k); setOlim(20); }}>${l} (${k === "all" ? open.length : open.filter(o => (stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]) === k).length})</button>`)}</div>
+      <div class="fl2">
+        <label>Delivery by<select value=${oa} onChange=${e => { setOa(e.target.value); setOlim(20); }}>
+          <option value="all">Everyone</option><option value="none">Not assigned (${un.length})</option>
+          ${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name} (${open.filter(o => o.assignedTo === e.mobile).length})</option>`)}
+        </select></label>
+        <label>Society<select value=${osoc} onChange=${e => { setOsoc(e.target.value); setOlim(20); }}>
+          <option value="all">All societies</option>
+          ${[...new Set(open.map(o => o.soc || ""))].sort().map(n => h`<option key=${n} value=${n}>${n || "No society"} (${open.filter(o => (o.soc || "") === n).length})</option>`)}
+        </select></label>
+      </div>
+    </div>`}
+    ${(() => {
+      const qq = oq.trim().toLowerCase();
+      const isUn = o => !o.assignedTo || !emps.some(e => e.active && e.mobile === o.assignedTo);
+      const fl = open.filter(o => (os === "all" || (stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]) === os)
+        && (oa === "all" || (oa === "none" ? isUn(o) : o.assignedTo === oa))
+        && (osoc === "all" || (o.soc || "") === osoc)
+        && (!qq || [o.name, o.soc, o.bld, o.unit, o.phone, o.otp, o.flat].some(f => String(f || "").toLowerCase().includes(qq))))
+        .sort((a, b) => (a.soc || "").localeCompare(b.soc || "") || String(a.unit || "").localeCompare(String(b.unit || ""), undefined, { numeric: true }));
+      return h`<div>
+        ${open.length > 0 && h`<p class="note">${fl.length === open.length ? "Showing all " + open.length : "Showing " + fl.length + " of " + open.length}${(os !== "all" || oa !== "all" || osoc !== "all" || qq) ? h` · <button class="lk" onClick=${() => { setOq(""); setOs("all"); setOa("all"); setOsoc("all"); setOlim(20); }}>Clear filters</button>` : ""}</p>`}
+        ${open.length > 0 && fl.length === 0 && h`<p class="note">No pending orders match.</p>`}
+        <ul>${fl.slice(0, olim).map(o => h`<li key=${o.id} class=${"pk st-" + STAGES[stageIdx(o.status)][0]}>
+          <details class="sd">
+            <summary><span class="es"><b>${[o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat}</b><small>${o.name || "Customer"} · ₹${o.total} · ${isUn(o) ? "Not assigned" : nameOf(o.assignedTo)}</small></span><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></summary>
+            <label>Status<select value=${stageIdx(o.status) > 2 ? "out" : STAGES[stageIdx(o.status)][0]} onChange=${ev => { setStage(o, ev.target.value, "admin"); setVer(v => v + 1); }}>${STAGES.slice(0, 3).map(st => h`<option key=${st[0]} value=${st[0]}>${st[1]}</option>`)}</select></label>
+            <label>Delivery by<select value=${emps.some(e => e.active && e.mobile === o.assignedTo) ? o.assignedTo : ""} onChange=${ev => reassign(o, ev.target.value)}>
+              <option value="">Not assigned</option>
+              ${active.map(e => h`<option key=${e.mobile} value=${e.mobile}>${e.name}</option>`)}
+            </select></label>
+            ${o.phone && h`<p class="note" style=${{ margin: 0 }}>Customer: <a class="lk" href=${"tel:" + o.phone}>${o.phone}</a></p>`}
+          </details>
+        </li>`)}</ul>
+        ${fl.length > olim && h`<button class="ghost" style=${{ width: "100%" }} onClick=${() => setOlim(olim + 20)}>Show more (${fl.length - olim} more)</button>`}
+      </div>`;
+    })()}
     <p class="note">Employees see only their own orders. Orders placed on other phones will reach this list once the backend is connected.</p>
   </div>`;
 }
