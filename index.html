@@ -337,9 +337,9 @@ const CFG = {
 // Admin settings (minimum order, cut-off, delivery slot). Saved in this browser; a backend will share them later.
 let OFF_CATS = new Set(); // categories the admin has hidden from customers (by number)
 const DEFAULT_BANNERS = [
-  { on: true, title: "Why pay extra?", text: "Direct from APMC to your society. No middlemen, no shop markup." },
+  { on: true, title: "Why pay extra?", text: "Direct from the market to your society. No middlemen, no shop markup." },
   { on: true, title: "Save about {savePct}% on groceries", text: "A ₹1,000 basket costs about ₹{local1000} at local prices. We show both prices." },
-  { on: true, title: "Fresh from the farm market", text: "Bought at APMC, packed and delivered the same week." },
+  { on: true, title: "Fresh from the farm market", text: "Bought fresh at the wholesale market, packed and delivered the same week." },
   { on: true, title: "Safe delivery", text: "Your order is handed over only when you share your 4-digit code with our delivery person." },
   { on: true, title: "Free delivery above ₹{free}", text: "Minimum order ₹{min}. Delivery is ₹{fee} below that." }
 ];
@@ -867,7 +867,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
   return h`<div class=${"app" + (shrunk ? " shrunk" : "")}>
     <div class="wrap">
       ${tab === "home" && h`<div>
-        <header><h1>${CFG.brand}</h1>${CFG.tagline && h`<p class="sub tag">${CFG.tagline}</p>`}<p class="sub">${profile.name ? "Hi " + profile.name.split(" ")[0] + ". " : ""}Fresh from APMC to ${effSoc ? effSoc.name : "your society"}</p></header>
+        <header><h1>${CFG.brand}</h1>${CFG.tagline && h`<p class="sub tag">${CFG.tagline}</p>`}<p class="sub">${profile.name ? "Hi " + profile.name.split(" ")[0] + ". " : ""}Fresh from the market to ${effSoc ? effSoc.name : "your society"}</p></header>
         ${!qn && h`<${Carousel} items=${CFG.banners} auto=${true} />`}
         <div class="banner"><span>🕘</span><span>Orders placed by <b>${CFG.close}</b>. Delivery <b>${dayText}</b>. Minimum order <b>₹${minOrder}</b>.</span></div>
         <p class="note">Prices shown are sample prices.</p>
@@ -1800,7 +1800,7 @@ function SocietiesAdmin() {
   const toggle = id => commit(list.map(x => x.id === id ? { ...x, status: x.status === "active" ? "soon" : "active" } : x));
   const del = id => commit(list.filter(x => x.id !== id));
   const link = id => CFG.pageUrl + "#" + id;
-  const invite = x => ["Hello " + x.name + " neighbours! 🥬", CFG.brand + " brings fresh vegetables, fruits, dal and staples straight from APMC to your society at pocket-friendly prices.",
+  const invite = x => ["Hello " + x.name + " neighbours! 🥬", CFG.brand + " brings fresh vegetables, fruits, dal and staples straight from the wholesale market to your society at pocket-friendly prices.",
     "Order by " + CFG.close + " · Delivery " + (x.day || CFG.delivery) + (x.min ? " · Minimum order ₹" + x.min : ""), "Order here: " + link(x.id)].join("\n");
   const copy = t => { try { navigator.clipboard.writeText(t); setMsg("Copied."); } catch (e) { setMsg("Select the text and copy it."); } };
   const active = list.filter(x => x.status === "active").length;
