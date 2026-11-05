@@ -302,6 +302,7 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .crd{display:flex;justify-content:center;gap:6px;margin-top:8px}
 .crd button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:var(--line)}
 .crd button.on{width:20px;border-radius:4px;background:var(--leaf)}
+.sub.tag{font-weight:700;color:var(--cta);margin:2px 0 4px}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -343,7 +344,9 @@ const DEFAULT_BANNERS = [
   { on: true, title: "Free delivery above ₹{free}", text: "Minimum order ₹{min}. Delivery is ₹{fee} below that." }
 ];
 CFG.banners = DEFAULT_BANNERS.map(b => ({ ...b }));
-const SETK = "wfb_settings", SET_DEFAULT = { banners: DEFAULT_BANNERS, min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 30, pay: 30, freeAbove: 1000, maxTries: 10, offCats: [] };
+const DEFAULT_TAGLINE = "Why pay extra? Eat fresh. Save more.";
+CFG.tagline = DEFAULT_TAGLINE;
+const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: DEFAULT_BANNERS, min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 30, pay: 30, freeAbove: 1000, maxTries: 10, offCats: [] };
 (function applySettings() {
   try {
     const o = JSON.parse(localStorage.getItem(SETK) || "null");
@@ -353,6 +356,7 @@ const SETK = "wfb_settings", SET_DEFAULT = { banners: DEFAULT_BANNERS, min: 700,
       if (Number.isFinite(+o.freeAbove) && +o.freeAbove >= 0 && o.freeAbove !== "" && o.freeAbove != null) CFG.freeAbove = Math.round(+o.freeAbove);
       if (Number.isFinite(+o.pay) && +o.pay >= 0 && o.pay !== "" && o.pay != null) CFG.pay = Math.round(+o.pay);
       if (Number.isInteger(+o.maxTries) && +o.maxTries >= 1 && +o.maxTries <= 50 && o.maxTries !== "") CFG.maxTries = Math.round(+o.maxTries);
+      if (typeof o.tagline === "string") CFG.tagline = o.tagline.trim().slice(0, 80);
       if (Array.isArray(o.banners)) CFG.banners = o.banners.slice(0, 8).map(b => ({ on: b && b.on !== false, title: String((b && b.title) || "").slice(0, 80), text: String((b && b.text) || "").slice(0, 200) }));
       if (Array.isArray(o.offCats)) OFF_CATS = new Set(o.offCats.map(Number).filter(Number.isFinite));
       if (o.close) CFG.close = String(o.close); if (o.delivery) CFG.delivery = String(o.delivery);
@@ -863,7 +867,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
   return h`<div class=${"app" + (shrunk ? " shrunk" : "")}>
     <div class="wrap">
       ${tab === "home" && h`<div>
-        <header><h1>${CFG.brand}</h1><p class="sub">${profile.name ? "Hi " + profile.name.split(" ")[0] + ". " : ""}Fresh from APMC to ${effSoc ? effSoc.name : "your society"}</p></header>
+        <header><h1>${CFG.brand}</h1>${CFG.tagline && h`<p class="sub tag">${CFG.tagline}</p>`}<p class="sub">${profile.name ? "Hi " + profile.name.split(" ")[0] + ". " : ""}Fresh from APMC to ${effSoc ? effSoc.name : "your society"}</p></header>
         ${!qn && h`<${Carousel} items=${CFG.banners} auto=${true} />`}
         <div class="banner"><span>🕘</span><span>Orders placed by <b>${CFG.close}</b>. Delivery <b>${dayText}</b>. Minimum order <b>₹${minOrder}</b>.</span></div>
         <p class="note">Prices shown are sample prices.</p>
@@ -1066,6 +1070,7 @@ function Login({ onDone }) {
   return h`<div class="wrap lg">
     <div style=${{ fontSize: 44 }} aria-hidden="true">🥬</div>
     <h1>${CFG.brand}</h1>
+    ${CFG.tagline && h`<p class="sub tag">${CFG.tagline}</p>`}
     <p class="sub">Log in with your mobile number to place your weekly order.</p>
     <div class="lgc">
       ${step === 0 ? h`<div>
@@ -2286,6 +2291,7 @@ function SettingsAdmin() {
   const [free, setFree] = useState(String(CFG.freeAbove));
   const [mt, setMt] = useState(String(CFG.maxTries));
   const [pay, setPay] = useState(String(CFG.pay));
+  const [tag, setTag] = useState(CFG.tagline || "");
   const [bn, setBn] = useState(() => (CFG.banners || []).map(b => ({ ...b })));
   const setB = (k, patch) => { setBn(bn.map((b, j) => j === k ? { ...b, ...patch } : b)); setMsg(""); };
   const [msg, setMsg] = useState("");
@@ -2298,13 +2304,13 @@ function SettingsAdmin() {
   const bad = min === "" || !Number.isFinite(m) || m < 0 || m > 100000 || !close.trim() || !delivery.trim()
     || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000 || bn.some(b => b.on && !b.title.trim()) || pay === "" || !Number.isFinite(pv) || pv < 0 || pv > 5000 || mt === "" || !Number.isInteger(tv) || tv < 1 || tv > 50;
   const apply = v => {
-    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; CFG.pay = v.pay; CFG.banners = (v.banners || []).map(b => ({ ...b })); OFF_CATS = new Set(v.offCats || []);
+    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; CFG.pay = v.pay; CFG.tagline = v.tagline || ""; CFG.banners = (v.banners || []).map(b => ({ ...b })); OFF_CATS = new Set(v.offCats || []);
     try { localStorage.setItem(SETK, JSON.stringify(v)); } catch (e) {}
     audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, maxTries: v.maxTries, pay: v.pay, off: v.offCats || [], by: "admin" });
   };
   const save = () => {
     if (bad) return;
-    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, pay: pv, banners: bn, offCats: off });
+    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, pay: pv, tagline: tag.trim(), banners: bn, offCats: off });
     if (allSoc && hasOwn) {
       const next = SOCIETIES.map(x => ({ ...x, day: "", min: 0 }));
       SOCIETIES = next;
@@ -2312,7 +2318,7 @@ function SettingsAdmin() {
     }
     setMsg("Saved. Customers see the new line on the Home page.");
   };
-  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setTag(DEFAULT_TAGLINE); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
   return h`<div class="wrap adm">
     <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
     <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
@@ -2326,6 +2332,9 @@ function SettingsAdmin() {
     <p class="note">Tick the categories customers can see. Unticked ones disappear from Home, Category, search, deals and the family box. Items stay in your catalogue.</p>
     <div class="pgs">${CATS.map((c, i) => h`<label key=${c} class="pk2"><input type="checkbox" checked=${!off.includes(i)} onChange=${e => { setOff(e.target.checked ? off.filter(x => x !== i) : [...off, i]); setMsg(""); }} /><span><b>${CAT_E[i] || "🛒"} ${c}</b><small>${ITEMS.filter(x => +x.c === i).length} items · ${off.includes(i) ? "Hidden from customers" : "Shown to customers"}</small></span></label>`)}</div>
     ${off.length >= CATS.length && h`<p class="warn">At least one category must stay on.</p>`}
+    <h2 style=${{ margin: "14px 0 4px" }}>Tag line</h2>
+    <label>Shown under the app name on the login and Home pages<input maxLength="80" value=${tag} onInput=${e => { setTag(e.target.value); setMsg(""); }} placeholder=${DEFAULT_TAGLINE} /></label>
+    <p class="note">Leave it empty to hide the tag line. ${tag.trim() && h`Preview: <b>${tag.trim()}</b>`}</p>
     <h2 style=${{ margin: "14px 0 4px" }}>Home banners</h2>
     <p class="note">Short messages customers swipe through at the top of Home. You can use these placeholders and they fill in automatically: <b>{savePct}</b> saving vs local prices, <b>{local1000}</b> what a ₹1,000 basket costs locally, <b>{min}</b>, <b>{free}</b>, <b>{fee}</b>, <b>{close}</b>, <b>{delivery}</b>.</p>
     ${bn.map((b, k) => h`<div key=${k} class="oc" style=${{ margin: "0 0 8px" }}>
