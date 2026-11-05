@@ -355,7 +355,9 @@ const DEFAULT_BANNERS = [
 CFG.banners = DEFAULT_BANNERS.map(b => ({ ...b }));
 const DEFAULT_TAGLINE = "Why pay extra? Eat fresh. Save more.";
 CFG.tagline = DEFAULT_TAGLINE;
-const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: DEFAULT_BANNERS, min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 30, pay: 30, freeAbove: 1000, maxTries: 10, offCats: [], gstOn: false, gstin: "", gstIncl: true, gstFee: 0 };
+let GST_RATES = [0, 5, 12, 18];
+const cleanRates = a => { const r = [...new Set((Array.isArray(a) ? a : []).map(Number).filter(x => Number.isFinite(x) && x >= 0 && x <= 100).map(x => Math.round(x * 100) / 100))].sort((x, y) => x - y); return r.includes(0) ? r : [0, ...r]; };
+const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: DEFAULT_BANNERS, min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 30, pay: 30, freeAbove: 1000, maxTries: 10, offCats: [], gstOn: false, gstin: "", gstIncl: true, gstFee: 0, gstRates: [0, 5, 12, 18] };
 (function applySettings() {
   try {
     const o = JSON.parse(localStorage.getItem(SETK) || "null");
@@ -368,7 +370,8 @@ const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: 
       if (typeof o.gstOn === "boolean") CFG.gstOn = o.gstOn;
       if (typeof o.gstin === "string") CFG.gstin = o.gstin.trim().toUpperCase().slice(0, 15);
       if (typeof o.gstIncl === "boolean") CFG.gstIncl = o.gstIncl;
-      if ([0, 5, 12, 18].includes(+o.gstFee)) CFG.gstFee = +o.gstFee;
+      if (Array.isArray(o.gstRates) && o.gstRates.length) GST_RATES = cleanRates(o.gstRates);
+      if (GST_RATES.includes(+o.gstFee)) CFG.gstFee = +o.gstFee;
       if (typeof o.tagline === "string") CFG.tagline = o.tagline.trim().slice(0, 80);
       if (Array.isArray(o.banners)) CFG.banners = o.banners.slice(0, 8).map(b => ({ on: b && b.on !== false, title: String((b && b.title) || "").slice(0, 80), text: String((b && b.text) || "").slice(0, 200) }));
       if (Array.isArray(o.offCats)) OFF_CATS = new Set(o.offCats.map(Number).filter(Number.isFinite));
@@ -670,7 +673,6 @@ function track(type, d) {
     lsSet(EVK, l.slice(-5000));
   } catch (e) {}
 }
-const GST_RATES = [0, 5, 12, 18];
 const money = x => { const r = Math.round(x * 100) / 100; return Number.isInteger(r) ? String(r) : r.toFixed(2); };
 // GST on a bill. opt = { on, incl, fr }. Lines carry g (rate %). Inclusive: tax sits inside the price. Exclusive: tax is added on top.
 function gstCalc(lines, fee, opt) {
@@ -2350,6 +2352,11 @@ function SettingsAdmin() {
   const [gin, setGin] = useState(CFG.gstin || "");
   const [gIncl, setGIncl] = useState(CFG.gstIncl !== false);
   const [gFee, setGFee] = useState(String(CFG.gstFee || 0));
+  const [rates, setRates] = useState([...GST_RATES]);
+  const [nr, setNr] = useState("");
+  const usedBy = r => ITEMS.filter(i => +i.g === r || (r === 0 && !(+i.g > 0))).length;
+  const addRate = () => { const v = Math.round(+nr * 100) / 100; if (nr === "" || !Number.isFinite(v) || v < 0 || v > 100 || rates.includes(v)) return; setRates(cleanRates([...rates, v])); setNr(""); setMsg(""); };
+  const dropRate = r => { if (r === 0 || usedBy(r) > 0 || +gFee === r) return; setRates(rates.filter(x => x !== r)); setMsg(""); };
   const [tag, setTag] = useState(CFG.tagline || "");
   const [bn, setBn] = useState(() => (CFG.banners || []).map(b => ({ ...b })));
   const setB = (k, patch) => { setBn(bn.map((b, j) => j === k ? { ...b, ...patch } : b)); setMsg(""); };
@@ -2363,13 +2370,13 @@ function SettingsAdmin() {
   const bad = min === "" || !Number.isFinite(m) || m < 0 || m > 100000 || !close.trim() || !delivery.trim()
     || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000 || bn.some(b => b.on && !b.title.trim()) || pay === "" || !Number.isFinite(pv) || pv < 0 || pv > 5000 || mt === "" || !Number.isInteger(tv) || tv < 1 || tv > 50 || (gin.trim() !== "" && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gin.trim().toUpperCase()));
   const apply = v => {
-    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; CFG.pay = v.pay; CFG.gstOn = !!v.gstOn; CFG.gstin = v.gstin || ""; CFG.gstIncl = v.gstIncl !== false; CFG.gstFee = +v.gstFee || 0; CFG.tagline = v.tagline || ""; CFG.banners = (v.banners || []).map(b => ({ ...b })); OFF_CATS = new Set(v.offCats || []);
+    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; CFG.pay = v.pay; CFG.gstOn = !!v.gstOn; CFG.gstin = v.gstin || ""; CFG.gstIncl = v.gstIncl !== false; CFG.gstFee = +v.gstFee || 0; GST_RATES = cleanRates(v.gstRates || GST_RATES); CFG.tagline = v.tagline || ""; CFG.banners = (v.banners || []).map(b => ({ ...b })); OFF_CATS = new Set(v.offCats || []);
     try { localStorage.setItem(SETK, JSON.stringify(v)); } catch (e) {}
     audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, maxTries: v.maxTries, pay: v.pay, off: v.offCats || [], gst: v.gstOn ? (v.gstIncl ? "on, inclusive" : "on, added") : "off", by: "admin" });
   };
   const save = () => {
     if (bad) return;
-    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, pay: pv, gstOn: gOn, gstin: gin.trim().toUpperCase(), gstIncl: gIncl, gstFee: +gFee || 0, tagline: tag.trim(), banners: bn, offCats: off });
+    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, pay: pv, gstOn: gOn, gstin: gin.trim().toUpperCase(), gstIncl: gIncl, gstFee: +gFee || 0, gstRates: rates, tagline: tag.trim(), banners: bn, offCats: off });
     if (allSoc && hasOwn) {
       const next = SOCIETIES.map(x => ({ ...x, day: "", min: 0 }));
       SOCIETIES = next;
@@ -2377,7 +2384,7 @@ function SettingsAdmin() {
     }
     setMsg("Saved. Customers see the new line on the Home page.");
   };
-  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setGOn(false); setGin(""); setGIncl(true); setGFee("0"); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setTag(DEFAULT_TAGLINE); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setGOn(false); setGin(""); setGIncl(true); setGFee("0"); setRates([0, 5, 12, 18]); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setTag(DEFAULT_TAGLINE); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
   return h`<div class="wrap adm">
     <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
     <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
@@ -2397,9 +2404,13 @@ function SettingsAdmin() {
       <label>Your GSTIN<input maxLength="15" value=${gin} onInput=${e => { setGin(e.target.value.toUpperCase()); setMsg(""); }} placeholder="27ABCDE1234F1Z5" /></label>
       ${gin.trim() !== "" && bad && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gin.trim()) && h`<p class="warn">A GSTIN has 15 characters, like 27ABCDE1234F1Z5.</p>`}
       <label class="pk2"><input type="checkbox" checked=${gIncl} onChange=${e => { setGIncl(e.target.checked); setMsg(""); }} /><span><b>Prices already include GST</b><small>${gIncl ? "Customers pay the listed price. The bill shows how much GST is inside it." : "GST is added on top of the listed price at checkout."}</small></span></label>
-      <label>GST on delivery fee<select value=${gFee} onChange=${e => { setGFee(e.target.value); setMsg(""); }}>${GST_RATES.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></label>
+      <label>GST on delivery fee<select value=${gFee} onChange=${e => { setGFee(e.target.value); setMsg(""); }}>${rates.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></label>
       <p class="note">Delivery fee GST depends on your CA's advice. Without a GSTIN, the customer bill is called "Bill", not "Tax invoice".</p>
     </div>`}
+    <h2 style=${{ margin: "14px 0 4px" }}>GST rate list</h2>
+    <p class="note">The rates you can pick for items in Catalogue and for the delivery fee. Add a rate, or remove one that no item uses. 0% always stays.</p>
+    <div class="chips">${rates.map(r => h`<span key=${r} class="chip" style=${{ display: "inline-flex", alignItems: "center", gap: 6 }}>${r}%${r !== 0 && usedBy(r) === 0 && +gFee !== r ? h`<button class="lk" aria-label=${"Remove " + r + "%"} onClick=${() => dropRate(r)}>×</button>` : r !== 0 ? h`<small>${usedBy(r)} item${usedBy(r) === 1 ? "" : "s"}</small>` : ""}</span>`)}</div>
+    <div style=${{ display: "flex", gap: 8, margin: "8px 0" }}><input type="number" inputMode="decimal" min="0" max="100" step="0.1" placeholder="e.g. 28" aria-label="New GST rate" value=${nr} onInput=${e => setNr(e.target.value)} /><button class="ghost" onClick=${addRate}>Add rate</button></div>
     <h2 style=${{ margin: "14px 0 4px" }}>Tag line</h2>
     <label>Shown under the app name on the login and Home pages<input maxLength="80" value=${tag} onInput=${e => { setTag(e.target.value); setMsg(""); }} placeholder=${DEFAULT_TAGLINE} /></label>
     <p class="note">Leave it empty to hide the tag line. ${tag.trim() && h`Preview: <b>${tag.trim()}</b>`}</p>
