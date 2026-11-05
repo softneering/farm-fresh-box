@@ -293,12 +293,12 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .cr{margin:12px 0}
 .crs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:16px;gap:0}
 .crs::-webkit-scrollbar{display:none}
-.cs{flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:16px 18px;min-height:104px;display:flex;flex-direction:column;justify-content:center;gap:4px;color:#fff;background:linear-gradient(135deg,#1f7a4d,#2f9e66)}
-.cs b{font-size:19px;line-height:1.25}
-.cs span{font-size:14px;line-height:1.4;opacity:.95}
-.cs1{background:linear-gradient(135deg,#d9531e,#f08a3c)}
-.cs2{background:linear-gradient(135deg,#1c6b5a,#3a9d7e)}
-.cs3{background:linear-gradient(135deg,#34506f,#4b78a8)}
+.bnr{flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:16px 18px;min-height:104px;display:flex;flex-direction:column;justify-content:center;gap:4px;color:#fff;background:linear-gradient(135deg,#1f7a4d,#2f9e66)}
+.bnr b{font-size:19px;line-height:1.25}
+.bnr span{font-size:14px;line-height:1.4;opacity:.95}
+.bnr1{background:linear-gradient(135deg,#d9531e,#f08a3c)}
+.bnr2{background:linear-gradient(135deg,#1c6b5a,#3a9d7e)}
+.bnr3{background:linear-gradient(135deg,#34506f,#4b78a8)}
 .crd{display:flex;justify-content:center;gap:6px;margin-top:8px}
 .crd button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:var(--line)}
 .crd button.on{width:20px;border-radius:4px;background:var(--leaf)}
@@ -685,7 +685,7 @@ function Carousel({ items, auto }) {
   if (n === 0) return null;
   return h`<section class="cr" aria-roledescription="carousel" aria-label="About the app">
     <div class="crs" ref=${ref} onTouchStart=${pause} onMouseDown=${pause} onWheel=${pause} onScroll=${e => { const el = e.target; const k = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (k !== idx.current) { idx.current = k; setI(k); } }}>
-      ${list.map((b, k) => h`<div key=${k} class=${"cs cs" + (k % 4)} role="group" aria-label=${(k + 1) + " of " + n}><b>${fillBanner(b.title, v)}</b><span>${fillBanner(b.text, v)}</span></div>`)}
+      ${list.map((b, k) => h`<div key=${k} class=${"bnr bnr" + (k % 4)} role="group" aria-label=${(k + 1) + " of " + n}><b>${fillBanner(b.title, v)}</b><span>${fillBanner(b.text, v)}</span></div>`)}
     </div>
     ${n > 1 && h`<div class="crd">${list.map((b, k) => h`<button key=${k} aria-label=${"Show banner " + (k + 1)} aria-current=${k === i ? "true" : null} class=${k === i ? "on" : ""} onClick=${() => { pause(); go(k); }}></button>`)}</div>`}
   </section>`;
