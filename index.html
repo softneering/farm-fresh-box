@@ -75,6 +75,8 @@ input,textarea{font:inherit;padding:11px;border-radius:10px;border:1px solid var
 .adm h2{font-size:20px;margin:22px 0 10px}
 .adm a{color:var(--leaf);font-weight:700}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.fg>label{min-width:0}.fg input{min-width:0;width:100%;box-sizing:border-box}
+@media (max-width:340px){.fg{grid-template-columns:1fr}}
 .sm2{grid-template-columns:1fr 1fr}
 .vd{font-weight:700;font-size:19px;margin:14px 0 4px}
 .good{color:var(--leaf)}.bad{color:var(--cta)}
