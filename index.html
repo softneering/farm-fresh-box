@@ -1499,7 +1499,19 @@ const inr = x => (x < 0 ? "-" : "") + "₹" + Math.abs(Math.round(x)).toLocaleSt
 
 function Calc() {
   const [v, setV] = useState({ apmc: 100, app: 200, sell: 150, kg: 7, orders: 40, del: 1, waste: 10, veh: 3000, lab: 2000, per: 25, fee: CFG.fee, share: 50 });
+  const [real, setReal] = useState(null);
   const n = k => +v[k] || 0;
+  // Fill kg, price, orders per delivery and fee share from the orders saved on this device (last 4 weeks)
+  const useReal = () => {
+    const since = Date.now() - 28 * 864e5;
+    const os = allRawOrders().filter(o => (o.t || 0) >= since && +o.kg > 0 && +o.sub > 0);
+    if (!os.length) { setReal({ n: 0 }); return; }
+    const kg = os.reduce((t, o) => t + +o.kg, 0), sub = os.reduce((t, o) => t + +o.sub, 0), paid = os.filter(o => +o.fee > 0).length;
+    const per = os.length / 4 / Math.max(1, n("del"));
+    const upd = { kg: Math.round(kg / os.length * 10) / 10, sell: Math.round(sub / kg), orders: Math.max(1, Math.round(per)), share: Math.round(paid / os.length * 100) };
+    setV({ ...v, ...upd });
+    setReal({ n: os.length, basket: Math.round(sub / os.length), ...upd });
+  };
   const calc = o => {
     const sold = o * n("kg"), bought = sold * (1 + n("waste") / 100);
     const rev = sold * n("sell") + o * n("share") / 100 * n("fee");
@@ -1520,6 +1532,12 @@ function Calc() {
   const fld = (k, label) => h`<label>${label}<input type="number" inputmode="decimal" min="0" value=${v[k]} onInput=${e => setV({ ...v, [k]: e.target.value })} /></label>`;
   return h`<div class="wrap adm">
     <header><h1>Profit calculator</h1><p class="sub">Enter your real prices and costs. All figures are per delivery unless noted.</p></header>
+    <div class="oc" style=${{ margin: "0 0 12px" }}>
+      <button class="ghost" onClick=${useReal}>Use my real orders</button>
+      ${real === null && h`<p class="note" style=${{ margin: "6px 0 0" }}>Fills average kg, selling price, orders per delivery and fee share from orders saved on this device in the last 4 weeks.</p>`}
+      ${real && real.n === 0 && h`<p class="note warn" style=${{ margin: "6px 0 0" }}>No recent orders with a recorded weight on this device yet, so nothing was changed. Orders placed before weights were recorded are skipped.</p>`}
+      ${real && real.n > 0 && h`<p class="note good" role="status" style=${{ margin: "6px 0 0" }}>Filled from ${real.n} order${real.n === 1 ? "" : "s"}: average basket ₹${real.basket}, ${real.kg} kg per order, ₹${real.sell}/kg blended selling price, about ${real.orders} orders per delivery (${n("del")} deliver${n("del") === 1 ? "y" : "ies"} a week), ${real.share}% paying the delivery fee.${real.n < 10 ? " This is a small sample, so treat it as rough." : ""} APMC price, wastage and trip costs are still your own numbers.</p>`}
+    </div>
     <div class="fg">
       ${fld("apmc", "APMC price you pay (₹/kg)")}
       ${fld("app", "App or market price (₹/kg)")}
