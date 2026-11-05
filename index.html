@@ -303,6 +303,14 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .crd button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:var(--line)}
 .crd button.on{width:20px;border-radius:4px;background:var(--leaf)}
 .sub.tag{font-weight:700;color:var(--cta);margin:2px 0 4px}
+.chips.nw{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-16px;padding-right:16px}
+.chips.nw::-webkit-scrollbar{display:none}
+.chips.nw .chp{white-space:nowrap;flex:none}
+.gh{margin:14px 0 6px;font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.res.dim{opacity:.8}
+.curb{font-size:12px;font-weight:700;color:var(--leaf);white-space:nowrap}
+.cura{margin:0 0 10px;border-color:var(--leaf)}
+.res[aria-current=true]{border-color:var(--leaf);box-shadow:0 0 0 1px var(--leaf)}
 .err::before{content:"⚠";flex:none}
 .otp input.bad{border-color:#c62828;box-shadow:0 0 0 3px color-mix(in srgb,#c62828 25%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb4ab;border-color:#ff8a80}:root:not([data-theme="light"]) .otp input.bad{border-color:#ff8a80}}
@@ -1106,12 +1114,17 @@ function AddressSetup({ mobile, profile, link, inline, onSave, onCancel, onLogou
   const [name, setName] = useState(profile.name || "");
   const [ask, setAsk] = useState(link && link.status !== "active" ? link : null);
   const [sent, setSent] = useState(false);
+  const [lim, setLim] = useState(8);
+  const cur = profile.soc ? SOCIETIES.find(s => s.id === profile.soc) : null;
   const areas = [...new Set(SOCIETIES.map(s => s.area))].sort();
   const lc = t => (t || "").toLowerCase();
   const term = lc(q.trim());
   const hits = SOCIETIES.filter(s => (!area || s.area === area) && (!term || [s.name, s.area, s.pincode].concat(s.alias || []).some(x => lc(x).includes(term))))
     .sort((a, b) => (a.status === "active" ? 0 : 1) - (b.status === "active" ? 0 : 1) || a.name.localeCompare(b.name));
-  const shown = hits.slice(0, 8);
+  const live = hits.filter(s => s.status === "active"), soon = hits.filter(s => s.status !== "active");
+  const shownLive = live.slice(0, lim), shownSoon = soon.slice(0, Math.max(0, lim - live.length));
+  const more = hits.length - shownLive.length - shownSoon.length;
+  const resBtn = s => h`<li key=${s.id}><button class=${"res" + (s.status !== "active" ? " dim" : "")} aria-current=${cur && cur.id === s.id ? "true" : null} onClick=${() => pick(s)}><span>${s.name}<small>${s.area}${s.pincode ? " · " + s.pincode : ""}</small></span>${cur && cur.id === s.id ? h`<span class="curb">✓ Your address</span>` : s.status !== "active" ? h`<span class="soonb">Notify me</span>` : null}</button></li>`;
   const pick = s => { if (s.status === "active") { setSoc(s); setBld(""); } else { setAsk(s); setSent(false); } };
   const canSave = soc && name.trim() && flat.trim() && (!(soc.buildings || []).length || bld);
   const notify = () => {
@@ -1130,13 +1143,17 @@ function AddressSetup({ mobile, profile, link, inline, onSave, onCancel, onLogou
       <button class="cta" style=${{ width: "100%" }} onClick=${notify}>Notify me on WhatsApp</button>
       <p style=${{ marginBottom: 0 }}><button class="lk" onClick=${() => { setAsk(null); setSent(false); }}>Back to the list</button></p>
     </div>` : !soc ? h`<div>
-      <label>Search your society<input value=${q} placeholder="Type the society name, area or pincode" onInput=${e => setQ(e.target.value)} autoFocus=${!inline} /></label>
-      ${areas.length > 1 && h`<div class="chips" role="group" aria-label="Area">
-        <button class="chp" aria-pressed=${area === ""} onClick=${() => setArea("")}>All areas</button>
-        ${areas.map(a => h`<button key=${a} class="chp" aria-pressed=${area === a} onClick=${() => setArea(area === a ? "" : a)}>${a}</button>`)}
+      <label>Search your society<input value=${q} placeholder="Type the society name, area or pincode" onInput=${e => { setQ(e.target.value); setLim(8); }} autoFocus=${!inline} /></label>
+      ${areas.length > 3 ? h`<label>Area<select value=${area} onChange=${e => { setArea(e.target.value); setLim(8); }}><option value="">All areas</option>${areas.map(a => h`<option key=${a} value=${a}>${a}</option>`)}</select></label>`
+        : areas.length > 1 && h`<div class="chips nw" role="group" aria-label="Area">
+        <button class="chp" aria-pressed=${area === ""} onClick=${() => { setArea(""); setLim(8); }}>All areas</button>
+        ${areas.map(a => h`<button key=${a} class="chp" aria-pressed=${area === a} onClick=${() => { setArea(area === a ? "" : a); setLim(8); }}>${a}</button>`)}
       </div>`}
-      <ul>${shown.map(s => h`<li key=${s.id}><button class="res" onClick=${() => pick(s)}><span>${s.name}<small>${s.area}${s.pincode ? " · " + s.pincode : ""}</small></span>${s.status !== "active" && h`<span class="soonb">Coming soon</span>`}</button></li>`)}</ul>
-      ${hits.length > shown.length && h`<p class="note">Showing ${shown.length} of ${hits.length}. Type more of the name to narrow down.</p>`}
+      ${cur && !term && !area && h`<div class="oc cura"><div class="top"><div><b>${cur.name}</b><p>${[profile.bld, profile.flat].filter(Boolean).join(", ")}${profile.flat || profile.bld ? " · " : ""}${cur.area}</p></div><span class="curb">✓ Your address</span></div></div>`}
+      <p class="note" style=${{ margin: "4px 0 8px" }}>${hits.length} societ${hits.length === 1 ? "y" : "ies"}${term || area ? " found" : ""}</p>
+      ${live.length > 0 && h`<h3 class="gh">Delivering now (${live.length})</h3><ul>${shownLive.map(resBtn)}</ul>`}
+      ${soon.length > 0 && shownSoon.length > 0 && h`<h3 class="gh">Coming soon (${soon.length})</h3><p class="note" style=${{ margin: "0 0 6px" }}>Tap one and we will message you when delivery starts there.</p><ul>${shownSoon.map(resBtn)}</ul>`}
+      ${more > 0 && h`<button class="ghost" style=${{ width: "100%", marginTop: 8 }} onClick=${() => setLim(lim + 8)}>Show ${Math.min(8, more)} more (${more} left)</button>`}
       ${hits.length === 0 && h`<p class="note">No society found. We add new societies regularly.</p>`}
     </div>` : h`<div>
       <div class="oc"><div class="top"><div><b>${soc.name}</b><p>${soc.area}</p></div><button class="lk" onClick=${() => { setSoc(null); setBld(""); }}>Change</button></div></div>
@@ -1148,7 +1165,7 @@ function AddressSetup({ mobile, profile, link, inline, onSave, onCancel, onLogou
       <label style=${{ marginTop: 14 }}>Flat or floor number<input value=${flat} placeholder="e.g. 1204" onInput=${e => setFlat(e.target.value)} /></label>
       <label>More address details (optional)<textarea rows="2" value=${det} placeholder="Wing, landmark, delivery instructions" onInput=${e => setDet(e.target.value)}></textarea></label>
       <label>Your name<input value=${name} autocomplete="name" onInput=${e => setName(e.target.value)} /></label>
-      ${soc.day && h`<p class="note">Delivery: ${soc.day}${soc.drop ? ". Drop point: " + soc.drop : ""}.</p>`}
+      <div class="banner" style=${{ margin: "4px 0 12px" }}><span>🚚</span><span>Orders placed by <b>${CFG.close}</b>. Delivery <b>${soc.day || CFG.delivery}</b>. Minimum order <b>₹${+soc.min || CFG.min}</b>.${soc.drop ? " Drop point: " + soc.drop + "." : ""}</span></div>
       <button class="cta" style=${{ width: "100%" }} disabled=${!canSave} onClick=${() => onSave({ ...profile, name: name.trim(), soc: soc.id, bld, flat: flat.trim(), det: det.trim() })}>${inline ? "Save address" : "Save and continue"}</button>
     </div>`}
     ${onCancel && h`<p><button class="lk" onClick=${onCancel}>Cancel</button></p>`}
