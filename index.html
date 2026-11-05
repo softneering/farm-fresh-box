@@ -665,23 +665,29 @@ function bannerVars() {
 const fillBanner = (t, v) => String(t || "").replace(/\{(\w+)\}/g, (m, k) => v[k] != null ? (typeof v[k] === "number" ? v[k].toLocaleString("en-IN") : v[k]) : m);
 function Carousel({ items, auto }) {
   const [i, setI] = useState(0);
-  const [hold, setHold] = useState(false);
-  const ref = React.useRef(null);
+  const ref = React.useRef(null), idx = React.useRef(0), holdUntil = React.useRef(0);
   const list = (items || []).filter(b => b.on && b.title && b.title.trim());
   const v = bannerVars();
-  const go = k => { const el = ref.current; if (!el) return; const n = (k + list.length) % list.length; el.scrollTo({ left: n * el.clientWidth, behavior: "smooth" }); setI(n); };
-  React.useEffect(() => {
+  const n = list.length;
+  const go = k => {
+    const el = ref.current; if (!el || n === 0) return;
+    const t = (k + n) % n; idx.current = t; setI(t);
     let reduce = false; try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
-    if (!auto || hold || reduce || list.length < 2) return;
-    const t = setInterval(() => go(i + 1), 5500);
+    el.scrollTo({ left: t * el.clientWidth, behavior: reduce ? "auto" : "smooth" });
+  };
+  // Slides change by themselves every 5 seconds. A touch or tap pauses it for 10 seconds, and it also waits while the tab is hidden.
+  React.useEffect(() => {
+    if (!auto || n < 2) return;
+    const t = setInterval(() => { if (document.hidden || Date.now() < holdUntil.current) return; go(idx.current + 1); }, 5000);
     return () => clearInterval(t);
-  });
-  if (list.length === 0) return null;
+  }, [auto, n]);
+  const pause = () => { holdUntil.current = Date.now() + 10000; };
+  if (n === 0) return null;
   return h`<section class="cr" aria-roledescription="carousel" aria-label="About the app">
-    <div class="crs" ref=${ref} onTouchStart=${() => setHold(true)} onScroll=${e => { const el = e.target; const n = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (n !== i) setI(n); }}>
-      ${list.map((b, k) => h`<div key=${k} class=${"cs cs" + (k % 4)} role="group" aria-label=${(k + 1) + " of " + list.length}><b>${fillBanner(b.title, v)}</b><span>${fillBanner(b.text, v)}</span></div>`)}
+    <div class="crs" ref=${ref} onTouchStart=${pause} onMouseDown=${pause} onWheel=${pause} onScroll=${e => { const el = e.target; const k = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (k !== idx.current) { idx.current = k; setI(k); } }}>
+      ${list.map((b, k) => h`<div key=${k} class=${"cs cs" + (k % 4)} role="group" aria-label=${(k + 1) + " of " + n}><b>${fillBanner(b.title, v)}</b><span>${fillBanner(b.text, v)}</span></div>`)}
     </div>
-    ${list.length > 1 && h`<div class="crd">${list.map((b, k) => h`<button key=${k} aria-label=${"Show banner " + (k + 1)} aria-current=${k === i ? "true" : null} class=${k === i ? "on" : ""} onClick=${() => { setHold(true); go(k); }}></button>`)}</div>`}
+    ${n > 1 && h`<div class="crd">${list.map((b, k) => h`<button key=${k} aria-label=${"Show banner " + (k + 1)} aria-current=${k === i ? "true" : null} class=${k === i ? "on" : ""} onClick=${() => { pause(); go(k); }}></button>`)}</div>`}
   </section>`;
 }
 
