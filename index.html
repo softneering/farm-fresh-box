@@ -251,6 +251,9 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .bl{list-style:none;margin:8px 0;padding:0;font-size:14px}
 .bl li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line,rgba(128,128,128,.3))}
 .bl li span{color:var(--mut)}
+.grpcard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:12px;margin:0 0 12px;cursor:pointer}
+.grpcard>span:first-child{font-size:26px}.grpcard>span:nth-child(2){flex:1;min-width:0}.grpcard b{display:block}.grpcard small{display:block;color:var(--mut);font-weight:400;font-size:13px;margin-top:2px}.grpcard i{font-style:normal;font-size:22px;color:var(--mut)}
+.grpbox{margin:0 0 12px}
 .bsum{margin:8px 0;font-size:14px;color:var(--mut)}
 .bsum>div{display:flex;justify-content:space-between;padding:2px 0}
 .spk{margin:10px 0}.spk .pgs{max-height:240px;overflow:auto}
@@ -336,6 +339,7 @@ const CFG = {
   delivery: "Saturday morning",
   min: 700, minKg: 0, freeAbove: 1000, fee: 30, pay: 30, maxTries: 10,
   gstOn: false, gstin: "", gstIncl: true, gstFee: 0,
+  groupOn: true, groupMin: 200,
   // Login. demoOtp:true shows the OTP on screen (no SMS, NOT secure). For real OTPs set demoOtp:false
   // and set api to your backend base URL, which must provide:
   //   POST {api}/send-otp   body {mobile}        -> {ok:true}
@@ -357,7 +361,7 @@ const DEFAULT_TAGLINE = "Why pay extra? Eat fresh. Save more.";
 CFG.tagline = DEFAULT_TAGLINE;
 let GST_RATES = [0, 5, 12, 18];
 const cleanRates = a => { const r = [...new Set((Array.isArray(a) ? a : []).map(Number).filter(x => Number.isFinite(x) && x >= 0 && x <= 100).map(x => Math.round(x * 100) / 100))].sort((x, y) => x - y); return r.includes(0) ? r : [0, ...r]; };
-const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: DEFAULT_BANNERS, min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 30, pay: 30, freeAbove: 1000, maxTries: 10, offCats: [], gstOn: false, gstin: "", gstIncl: true, gstFee: 0, gstRates: [0, 5, 12, 18] };
+const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: DEFAULT_BANNERS, min: 700, close: "Thursday 9 PM", delivery: "Saturday morning", fee: 30, pay: 30, freeAbove: 1000, maxTries: 10, offCats: [], gstOn: false, gstin: "", gstIncl: true, gstFee: 0, gstRates: [0, 5, 12, 18], groupOn: true, groupMin: 200 };
 (function applySettings() {
   try {
     const o = JSON.parse(localStorage.getItem(SETK) || "null");
@@ -367,6 +371,8 @@ const SETK = "wfb_settings", SET_DEFAULT = { tagline: DEFAULT_TAGLINE, banners: 
       if (Number.isFinite(+o.freeAbove) && +o.freeAbove >= 0 && o.freeAbove !== "" && o.freeAbove != null) CFG.freeAbove = Math.round(+o.freeAbove);
       if (Number.isFinite(+o.pay) && +o.pay >= 0 && o.pay !== "" && o.pay != null) CFG.pay = Math.round(+o.pay);
       if (Number.isInteger(+o.maxTries) && +o.maxTries >= 1 && +o.maxTries <= 50 && o.maxTries !== "") CFG.maxTries = Math.round(+o.maxTries);
+      if (typeof o.groupOn === "boolean") CFG.groupOn = o.groupOn;
+      if (Number.isFinite(+o.groupMin) && +o.groupMin >= 0 && o.groupMin !== "" && o.groupMin != null) CFG.groupMin = Math.round(+o.groupMin);
       if (typeof o.gstOn === "boolean") CFG.gstOn = o.gstOn;
       if (typeof o.gstin === "string") CFG.gstin = o.gstin.trim().toUpperCase().slice(0, 15);
       if (typeof o.gstIncl === "boolean") CFG.gstIncl = o.gstIncl;
@@ -745,19 +751,27 @@ function NavBar({ tab, go, count }) {
   </div></nav>`;
 }
 
-function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
+function App({ mobile, onLogout, isAdmin, profile, onProfile, link, join }) {
   const ITEMS = shopItems(); // only items from categories the admin has switched on
   const OK = "wfb_orders_" + mobile;
   const soc = SOCIETIES.find(x => x.id === profile.soc) || null;
   const linkSoc = link && link.status === "active" ? link : null;
   const effSoc = (soc && soc.status === "active" ? soc : null) || linkSoc;
   const addrOk = !!(soc && soc.status === "active" && profile.name && profile.flat && (!(soc.buildings || []).length || profile.bld));
-  const minOrder = (effSoc && +effSoc.min) || CFG.min;
+  const [groups, setGroupsS] = useState(loadGroups);
+  const setGroups = fn => setGroupsS(prev => { const n = typeof fn === "function" ? fn(prev) : fn; lsSet(GRK, n); return n; });
+  const [joinCode, setJoinCode] = useState(join || "");
+  const [gSel, setGSel] = useState(null);
+  const [closeAfter, setCloseAfter] = useState(false);
+  const openGroups = CFG.groupOn ? groups.filter(g => g.open && g.members.some(m => m.m === mobile) && soc && g.soc === soc.id) : [];
+  const gSelId = gSel === null ? (openGroups.length === 1 ? openGroups[0].id : "") : gSel;
+  const grp = openGroups.find(g => g.id === gSelId) || null;
+  const minOrder = Math.min((effSoc && +effSoc.min) || CFG.min, grp ? CFG.groupMin : Infinity);
   const dayText = (effSoc && effSoc.day) || CFG.delivery;
   const addr = soc ? [profile.flat, profile.bld, soc.name].filter(Boolean).join(", ") : "";
   const [editAddr, setEditAddr] = useState(false);
   const [cart, setCart] = useState({});
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState(join && CFG.groupOn ? "groups" : "home");
   const [cat, setCat] = useState(() => { const k = CATS.findIndex((c, i) => !OFF_CATS.has(i)); return k < 0 ? 0 : k; });
   const [q, setQ] = useState("");
   const qn = q.trim().toLowerCase();
@@ -870,7 +884,8 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
   const kg = lines.reduce((s, l) => s + l.q * (l.w || 1), 0);
   const kgR = Math.round(kg * 10) / 10;
   const save = lines.reduce((s, l) => s + (l.mrp > l.p ? l.q * (l.mrp - l.p) : 0), 0);
-  const fee = sub === 0 || sub >= CFG.freeAbove ? 0 : CFG.fee;
+  const gx = grp ? groupStats(grp) : null, gN = gx ? gx.n + 1 : 0, gSub = gx ? gx.sub + sub : 0;
+  const fee = sub === 0 ? 0 : grp ? (sub >= CFG.freeAbove || gSub >= CFG.freeAbove ? 0 : Math.ceil(CFG.fee / gN)) : sub >= CFG.freeAbove ? 0 : CFG.fee;
   const gs = gstCalc(lines, fee, cfgGst());
   const total = sub + fee + gs.add;
   const ready = sub >= minOrder && addrOk;
@@ -883,14 +898,16 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
     const oid = Date.now();
     const msg = ["New order: " + CFG.brand + " " + orderNo(oid), "Name: " + profile.name, "Society: " + (soc ? soc.name : ""), "Address: " + [profile.flat, profile.bld].filter(Boolean).join(", "), ...[profile.det ? "Details: " + profile.det : "", soc && soc.drop ? "Drop point: " + soc.drop : "", f.phone ? "Phone: " + f.phone : ""].filter(Boolean), "",
       ...lines.map(l => "• " + l.n + ": " + l.q + " × " + l.u + " = ₹" + l.q * l.p),
-      "", "Total weight: " + kgR + " kg", "Items: ₹" + sub, save > 0 ? "Saved vs local prices: ₹" + save : "", "Delivery: ₹" + fee, gs.on && gs.tax > 0 ? (gs.incl ? "Includes GST: ₹" : "GST: ₹") + money(gs.tax) : "", "Total: ₹" + total, "Delivery: " + dayText,
+      "", "Total weight: " + kgR + " kg", "Items: ₹" + sub, save > 0 ? "Saved vs local prices: ₹" + save : "", (grp ? "Group: " + grp.name : ""), "Delivery: ₹" + fee, gs.on && gs.tax > 0 ? (gs.incl ? "Includes GST: ₹" : "GST: ₹") + money(gs.tax) : "", "Total: ₹" + total, "Delivery: " + dayText,
       f.note ? "Note: " + f.note : ""].filter((x, i, a) => x !== "" || a[i - 1] !== "").join("\n");
     window.open("https://wa.me/" + CFG.wa + "?text=" + encodeURIComponent(msg), "_blank");
-    const o = { id: oid, t: oid, status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p, mrp: l.mrp, ...(+l.g > 0 ? { g: +l.g } : {}), ...(l.hsn ? { hsn: l.hsn } : {}) })), ...(gs.on ? { gst: { incl: gs.incl, tax: gs.tax, groups: gs.groups, gstin: CFG.gstin, fr: CFG.gstFee } } : {}), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : "") };
+    const o = { id: oid, t: oid, status: "placed", name: profile.name, soc: soc ? soc.name : "", bld: profile.bld || "", unit: profile.flat || "", det: profile.det || "", phone: f.phone || mobile, day: dayText, flat: addr, lines: lines.map(l => ({ id: l.id, n: l.n, q: l.q, u: l.u, p: l.p, mrp: l.mrp, ...(+l.g > 0 ? { g: +l.g } : {}), ...(l.hsn ? { hsn: l.hsn } : {}) })), ...(gs.on ? { gst: { incl: gs.incl, tax: gs.tax, groups: gs.groups, gstin: CFG.gstin, fr: CFG.gstFee } } : {}), sub, fee, total, kg: kgR, save, otp: newOtp(), assignedTo: pickEmployee(soc ? soc.name : ""), ...(grp ? { grp: grp.id, grpName: grp.name } : {}) };
     const next = [o, ...orders].slice(0, 30);
-    setOrders(next); lsSet(OK, next);
+    lsSet(OK, next);
+    if (grp) { regroupFees(grp.id); if (closeAfter && grp.owner === mobile) { setGroups(gs => gs.map(x => x.id === grp.id ? { ...x, open: false, closedAt: Date.now() } : x)); audit("group_closed", { group: grp.id, name: grp.name, by: mobile, how: "with order" }); } setGSel(null); setCloseAfter(false); }
+    setOrders(lsGet(OK, next));
     track("order", { total, items: lines.length, society: soc ? soc.name : "" });
-    audit("placed", { ...orderTag(o), by: "customer" });
+    audit("placed", { ...orderTag(o), ...(grp ? { group: grp.id } : {}), by: "customer" });
     if (o.assignedTo) audit("assigned", { ...orderTag(o), emp: o.assignedTo, by: "auto" });
     setCart({}); setF({ ...f, note: "" });
     setNotice("Your order " + orderNo(oid) + " was sent on WhatsApp. We will confirm it there.");
@@ -913,6 +930,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         <header><h1>${CFG.brand}</h1>${CFG.tagline && h`<p class="sub tag">${CFG.tagline}</p>`}<p class="sub">${profile.name ? "Hi " + profile.name.split(" ")[0] + ". " : ""}Fresh from the market to ${effSoc ? effSoc.name : "your society"}</p></header>
         ${!qn && h`<${Carousel} items=${CFG.banners} auto=${true} />`}
         <div class="banner"><span>🕘</span><span>Orders placed by <b>${CFG.close}</b>. Delivery <b>${dayText}</b>. Minimum order <b>₹${minOrder}</b>.</span></div>
+        ${CFG.groupOn && h`<button class="grpcard" onClick=${() => go("groups")}><span aria-hidden="true">👥</span><span><b>${openGroups.length ? "Your group: " + openGroups[0].name : "Order together with neighbours"}</b><small>${openGroups.length ? groupStats(openGroups[0]).n + " order(s) so far · ₹" + groupStats(openGroups[0]).sub + " of ₹" + CFG.freeAbove + " for free delivery" : "Start a group, share the link, and split the delivery fee. Free for all from ₹" + CFG.freeAbove + "."}</small></span><i aria-hidden="true">›</i></button>`}
         <p class="note">Prices shown are sample prices.</p>
         ${searchBox}
         ${qn && h`<div><h2 class="sec">${ITEMS.filter(match).length} result${ITEMS.filter(match).length === 1 ? "" : "s"}</h2>${ITEMS.filter(match).length === 0 ? h`<p class="note">No items match “${q}”. Try another word.</p>` : h`<ul>${ITEMS.filter(match).map(i => rowFor(i, cart[i.id] || 0))}</ul>`}</div>`}
@@ -949,11 +967,20 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         <header class="hdr2"><h1>Your cart</h1>${lines.length > 0 && h`<button class="lk" onClick=${resetCart}>${confirmReset ? "Tap again to clear" : "Reset cart"}</button>`}</header>
         ${lines.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🛒</div><p>Your cart is empty.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<div>
           <ul>${lines.map(l => rowFor(l, l.q))}</ul>
-          ${(sub < minOrder || fee > 0) && h`<div class=${"nudge" + (sub < minOrder ? " need" : "")} role="status">
+          ${(sub < minOrder || (fee > 0 && !grp)) && h`<div class=${"nudge" + (sub < minOrder ? " need" : "")} role="status">
             <div class="nt"><span class="ni" aria-hidden="true">${sub < minOrder ? "🛒" : "🚚"}</span><span>${sub < minOrder ? h`Add <b>₹${minOrder - sub}</b> more to reach the <b>₹${minOrder}</b> minimum order` : h`Add <b>₹${CFG.freeAbove - sub}</b> more for <b>free delivery</b>`}</span></div>
             <div class="np" aria-hidden="true"><i style=${{ width: Math.min(100, Math.round(sub / (sub < minOrder ? minOrder : CFG.freeAbove) * 100)) + "%" }}></i></div>
           </div>`}
           ${sub >= minOrder && fee === 0 && h`<div class="nudge ok" role="status"><div class="nt"><span class="ni" aria-hidden="true">🎉</span><span><b>Free delivery</b> on this order</span></div></div>`}
+          ${CFG.groupOn && addrOk && openGroups.length > 0 && h`<div class="oc grpbox">
+            <label>Order with<select value=${gSelId} onChange=${e => setGSel(e.target.value)}><option value="">Just me</option>${openGroups.map(g => h`<option key=${g.id} value=${g.id}>👥 ${g.name}</option>`)}</select></label>
+            ${grp && h`<div>
+              <p class="note" style=${{ margin: "6px 0" }}>Group total with your order: <b>₹${gSub}</b> · ${gN} order${gN > 1 ? "s" : ""}. ${gSub >= CFG.freeAbove || sub >= CFG.freeAbove ? "Delivery is free for everyone." : "Delivery ₹" + CFG.fee + " is shared by the group; free for everyone at ₹" + CFG.freeAbove + "."}</p>
+              <div class="np" aria-hidden="true"><i style=${{ width: Math.min(100, Math.round(gSub / CFG.freeAbove * 100)) + "%" }}></i></div>
+              ${grp.owner === mobile && h`<label class="pk2" style=${{ margin: "8px 0 0" }}><input type="checkbox" checked=${closeAfter} onChange=${e => setCloseAfter(e.target.checked)} /><span><b>Close the group after my order</b><small>Nobody else can order with this group afterwards.</small></span></label>`}
+            </div>`}
+          </div>`}
+          ${CFG.groupOn && addrOk && openGroups.length === 0 && h`<p class="note">Ordering with neighbours? <button class="lk" onClick=${() => go("groups")}>Start or join a group</button> to share delivery.</p>`}
           <div class="sum">
             <div><span>Total weight</span><span>${kgR} kg</span></div>
             <div><span>Items</span><span>₹${sub}</span></div>
@@ -979,7 +1006,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         ${orders.length === 0 ? h`<div class="empty"><div style=${{ fontSize: 48 }} aria-hidden="true">🧾</div><p>No orders yet.</p><button class="cta" onClick=${() => go("home")}>Start shopping</button></div>` : h`<ul>
           ${orders.map(o => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
             <div class="top"><b>${fmtDate(o.t)}</b><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></div>
-            <p class="ono">Order ${orderNo(o)}</p>
+            <p class="ono">Order ${orderNo(o)}${o.grpName ? " · 👥 " + o.grpName : ""}</p>
             <div class="trk" aria-hidden="true">${STAGES.map((st, k) => h`<i key=${st[0]} class=${k <= stageIdx(o.status) ? "on" : ""}></i>`)}</div>
             <div class="trkl" aria-hidden="true">${STAGES.map((st, k) => h`<span key=${st[0]} class=${k === stageIdx(o.status) ? "cur" : ""}>${st[1] === "Out for delivery" ? "On the way" : st[1]}</span>`)}</div>
             ${o.status === "delivered" && o.deliveredBy && o.deliveredBy !== "admin" && h`<p>Delivered by ${(findEmp(o.deliveredBy) || {}).name || "our delivery partner"}${o.deliveredAt ? " · " + fmtDate(o.deliveredAt) : ""}</p>`}
@@ -999,6 +1026,8 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
         <p class="note" style=${{ marginTop: 14 }}>Order history is saved on this device only.</p>
       </div>`}
 
+      ${tab === "groups" && CFG.groupOn && h`<${Groups} mobile=${mobile} profile=${profile} soc=${soc} addrOk=${addrOk} groups=${groups} setGroups=${setGroups} join=${joinCode} clearJoin=${() => { setJoinCode(""); try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }} onAddress=${() => setEditAddr(true)} onShop=${id => { setGSel(id); go("home"); }} onBack=${() => go("home")} />`}
+
       ${tab === "profile" && h`<div>
         <header><h1>Profile</h1></header>
         <div class="oc">
@@ -1013,6 +1042,7 @@ function App({ mobile, onLogout, isAdmin, profile, onProfile, link }) {
           ${geoMsg && h`<p class="note" role="status" style=${{ margin: "8px 0 0" }}>${geoMsg}</p>`}
           ${geo.consent === "yes" && h`<button class="lk" onClick=${doCapture}>Update my location now</button>`}
         </div>
+        ${CFG.groupOn && h`<p style=${{ marginTop: 12 }}><button class="lk" onClick=${() => go("groups")}>👥 My groups</button></p>`}
         <p style=${{ marginTop: 16 }}><button class="lk" onClick=${() => setTerms(true)}>Terms and Conditions</button>${isAdmin && h` · <a class="lk" href="#admin">Admin</a>`}${orders.length > 0 && h` · <button class="lk" onClick=${clearOrders}>Clear order history</button>`}</p>
         <button class="ghost" style=${{ width: "100%", marginTop: 8 }} onClick=${onLogout}>Log out</button>
       </div>`}
@@ -1244,6 +1274,26 @@ function audit(type, d) {
   lsSet(AUK, l.slice(-8000));
 }
 const orderTag = o => ({ order: o.id, where: [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "", total: o.total, cust: o.name || "" });
+// ---- Groups (kept in this browser until the online version) ----
+const GRK = "wfb_groups";
+const loadGroups = () => { const l = lsGet(GRK, []); return Array.isArray(l) ? l.filter(g => g && g.id && Array.isArray(g.members)) : []; };
+const newCode = () => { const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = ""; for (let i = 0; i < 6; i++) c += A[Math.floor(Math.random() * A.length)]; return c; };
+const groupLink = g => location.href.split("#")[0] + "#g-" + g.code;
+function groupStats(g) {
+  const os = allRawOrders().filter(o => o.grp === g.id);
+  return { orders: os, n: os.length, sub: os.reduce((t, o) => t + (o.sub || 0), 0), by: new Set(os.map(o => o._m)) };
+}
+// Delivery is shared: every order still being prepared pays an equal share, or nothing once the group (or the order itself) reaches the free-delivery amount
+function regroupFees(gid) {
+  const all = allRawOrders().filter(o => o.grp === gid), n = all.length, gsub = all.reduce((t, o) => t + (o.sub || 0), 0);
+  all.filter(o => !o.status || o.status === "placed" || o.status === "packed").forEach(o => {
+    const nf = (o.sub >= CFG.freeAbove || gsub >= CFG.freeAbove) ? 0 : Math.ceil(CFG.fee / n);
+    if (nf === o.fee) return;
+    const c = o.gst ? gstCalc(o.lines, nf, { on: true, incl: o.gst.incl, fr: o.gst.fr }) : null;
+    patchOrder(o.id, x => ({ ...x, fee: nf, ...(c ? { gst: { ...x.gst, tax: c.tax, groups: c.groups } } : {}), total: x.sub + nf + (c ? c.add : 0) }));
+    audit("fee_shared", { order: o.id, group: gid, fee: nf, by: "auto" });
+  });
+}
 // Short order number shown everywhere (derived from the order id so it is the same on every screen)
 const orderNo = o => "#" + Number(o && o.id != null ? o.id : o).toString(36).toUpperCase().slice(-6);
 const STAGES = [["placed", "Placed"], ["packed", "Packed"], ["out", "Out for delivery"], ["delivered", "Delivered"]];
@@ -1339,7 +1389,7 @@ function Deliveries({ emp, onLogout }) {
   const addr = o => [o.soc, o.bld, o.unit].filter(Boolean).join(", ") || o.flat || "Address not given";
   const card = (o, isFree) => h`<li key=${o.id} class=${"oc st-" + STAGES[stageIdx(o.status)][0]}>
     <div class="top"><b>${addr(o)}</b><span class="chip">₹${o.total}</span></div>
-    <p class="ono">Order ${orderNo(o)}</p>
+    <p class="ono">Order ${orderNo(o)}${o.grpName ? " · 👥 " + o.grpName : ""}</p>
     <p style=${{ margin: "0 0 6px" }}><span class="chip sch">${STAGES[stageIdx(o.status)][1]}</span></p>
     <p>${o.name || "Customer"}${o.det ? " · " + o.det : ""}</p>
     ${o.phone && h`<p><a class="lk" href=${"tel:" + o.phone}>Call ${o.phone}</a></p>`}
@@ -1377,7 +1427,7 @@ function Deliveries({ emp, onLogout }) {
       ${done.length === 0 && h`<p class="note">You have not delivered any orders yet.</p>`}
       <ul>${done.map(o => h`<li key=${o.id} class="oc st-delivered">
         <div class="top"><b>${addr(o)}</b><span class="chip sch">Delivered</span></div>
-        <p class="ono">Order ${orderNo(o)}</p>
+        <p class="ono">Order ${orderNo(o)}${o.grpName ? " · 👥 " + o.grpName : ""}</p>
         <p>${o.name || "Customer"} · ₹${o.total}</p>
         <p>${(o.lines || []).map(l => l.n + " × " + l.q + " " + l.u).join(", ")}</p>
         <p><span class=${"chip " + (o.paidAt ? "st-ok" : "st-bad")}>${o.paidAt ? "Paid" : "Unpaid"}</span> ₹${amtOf(o)}${o.paidAt ? " · paid on " + fmtDate(o.paidAt) : " · due"}</p>
@@ -1426,7 +1476,73 @@ function EmployeeApp({ emp, onLogout }) {
   </div>`;
 }
 
-function Gate({ link }) {
+function Groups({ mobile, profile, soc, addrOk, groups, setGroups, join, clearJoin, onAddress, onShop, onBack }) {
+  const [name, setName] = useState("");
+  const [open, setOpen] = useState(null);
+  const [msg, setMsg] = useState("");
+  const mine = groups.filter(g => g.members.some(m => m.m === mobile)).sort((a, b) => (b.open - a.open) || b.t - a.t);
+  const jg = join ? groups.find(g => g.code === join) : null;
+  const already = jg && jg.members.some(m => m.m === mobile);
+  const upd = (id, fn) => setGroups(gs => gs.map(g => g.id === id ? fn(g) : g));
+  const create = () => {
+    if (!addrOk || !name.trim()) return;
+    const g = { id: "g" + Date.now().toString(36), code: newCode(), name: name.trim().slice(0, 40), soc: soc.id, socName: soc.name, owner: mobile, ownerName: profile.name || "", members: [{ m: mobile, name: profile.name || "", t: Date.now() }], open: true, t: Date.now() };
+    setGroups(gs => [g, ...gs]); audit("group_created", { group: g.id, name: g.name, where: soc.name, by: mobile });
+    setName(""); setOpen(g.id); setMsg("Group created. Share the link with your neighbours.");
+  };
+  const doJoin = () => {
+    if (!jg) return;
+    if (!addrOk) { onAddress(); return; }
+    if (!jg.open) { setMsg("This group is closed."); return; }
+    if (soc.id !== jg.soc) { setMsg("This group delivers to " + jg.socName + ". Your address is in " + soc.name + "."); return; }
+    if (jg.members.length >= 30) { setMsg("This group is full."); return; }
+    upd(jg.id, g => ({ ...g, members: [...g.members, { m: mobile, name: profile.name || "", t: Date.now() }] }));
+    audit("group_joined", { group: jg.id, name: jg.name, by: mobile });
+    setOpen(jg.id); clearJoin(); setMsg("You joined " + jg.name + ".");
+  };
+  const share = g => { const t = "Join my group \"" + g.name + "\" on " + CFG.brand + " and share the delivery fee. " + groupLink(g); window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank"); };
+  const copy = g => { try { navigator.clipboard.writeText(groupLink(g)).then(() => setMsg("Link copied.")); } catch (e) { setMsg(groupLink(g)); } };
+  const card = g => {
+    const st = groupStats(g), isOwner = g.owner === mobile, isOpen = open === g.id;
+    return h`<li key=${g.id} class="oc">
+      <div class="top"><button class="lk" style=${{ textAlign: "left", fontWeight: 700 }} aria-expanded=${isOpen} onClick=${() => setOpen(isOpen ? null : g.id)}>👥 ${g.name}</button><span class=${"chip " + (g.open ? "st-ok" : "sch")}>${g.open ? "Open" : "Closed"}</span></div>
+      <p class="note" style=${{ margin: "4px 0" }}>${g.socName} · ${g.members.length} member${g.members.length > 1 ? "s" : ""} · ${st.n} order${st.n === 1 ? "" : "s"} · group total ₹${st.sub}</p>
+      <div class="np" aria-hidden="true"><i style=${{ width: Math.min(100, Math.round(st.sub / CFG.freeAbove * 100)) + "%" }}></i></div>
+      <p class="note" style=${{ margin: "4px 0" }}>${st.sub >= CFG.freeAbove ? "Free delivery reached for everyone." : "₹" + (CFG.freeAbove - st.sub) + " more for free delivery. Until then the delivery fee is shared."}</p>
+      ${isOpen && h`<div>
+        <ul class="bl">${g.members.map(m => h`<li key=${m.m}><span>${m.name || "Neighbour"}${m.m === g.owner ? " (started the group)" : ""}${m.m === mobile ? " · you" : ""}</span><b>${st.by.has(m.m) ? "Ordered ✓" : "Not yet"}</b></li>`)}</ul>
+        <div style=${{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
+          ${g.open && h`<button class="cta" onClick=${() => onShop(g.id)}>Shop for this group</button>`}
+          ${g.open && h`<button class="ghost" onClick=${() => share(g)}>Share on WhatsApp</button>`}
+          ${g.open && h`<button class="ghost" onClick=${() => copy(g)}>Copy link</button>`}
+        </div>
+        ${isOwner && g.open && h`<button class="lk" onClick=${() => { upd(g.id, x => ({ ...x, open: false, closedAt: Date.now() })); audit("group_closed", { group: g.id, name: g.name, by: mobile, how: "manual" }); }}>Close this group</button>`}
+        ${isOwner && !g.open && (st.n === 0 ? h`<button class="lk" onClick=${() => { upd(g.id, x => ({ ...x, open: true, closedAt: null })); audit("group_reopened", { group: g.id, name: g.name, by: mobile }); }}>Open this group again</button>` : h`<p class="note">Orders were already placed, so this group stays closed. Start a new group for your next order.</p>`)}
+        ${!isOwner && !st.by.has(mobile) && h`<button class="lk" onClick=${() => { upd(g.id, x => ({ ...x, members: x.members.filter(m => m.m !== mobile) })); setOpen(null); }}>Leave group</button>`}
+      </div>`}
+    </li>`;
+  };
+  return h`<div>
+    <header class="hdr2"><h1>Groups</h1><button class="lk" onClick=${onBack}>← Home</button></header>
+    <p class="sub">Order with your neighbours. Everyone places their own order and bill, and the delivery fee is shared.</p>
+    ${msg && h`<div class="banner" role="status"><span>ℹ️</span><span>${msg}</span></div>`}
+    ${join && !already && (jg ? h`<div class="oc grpbox">
+      <b>You are invited to ${jg.name}</b>
+      <p class="note">Started by ${jg.ownerName || "a neighbour"} · ${jg.socName} · ${jg.members.length} member${jg.members.length > 1 ? "s" : ""} · ${jg.open ? "Open" : "Closed"}</p>
+      ${jg.open ? h`<button class="cta" onClick=${doJoin}>${addrOk ? "Join group" : "Choose my delivery address to join"}</button>` : h`<p class="warn">This group is closed.</p>`}
+    </div>` : h`<div class="oc"><p class="warn">We could not find this group. Groups are saved on the phone that created them for now, so ask for a new link once the online version is live.</p></div>`)}
+    <div class="oc">
+      <b>Start a group</b>
+      ${addrOk ? h`<div><label>Group name<input maxLength="40" placeholder="Tower B, 4th floor" value=${name} onInput=${e => setName(e.target.value)} /></label>
+        <p class="note" style=${{ margin: "0 0 8px" }}>Delivers to ${soc.name}. Your delivery address is used for your own order.</p>
+        <button class="cta" disabled=${!name.trim()} onClick=${create}>Create group</button></div>` : h`<div><p class="note">Choose your delivery address first, the same as when you review your cart.</p><button class="cta" onClick=${onAddress}>Choose delivery address</button></div>`}
+    </div>
+    ${mine.length > 0 ? h`<h2 style=${{ margin: "14px 0 6px" }}>Your groups</h2><ul>${mine.map(card)}</ul>` : h`<p class="note" style=${{ marginTop: 12 }}>You are not in any group yet.</p>`}
+    <p class="note" style=${{ marginTop: 14 }}>Groups are saved on this device for now. Sharing between different phones comes with the online version.</p>
+  </div>`;
+}
+
+function Gate({ link, join }) {
   const [m, setM] = useState(loadSession());
   const [prof, setProf] = useState(() => lsGet("wfb_profile_" + loadSession(), {}));
   const logout = () => { track("logout"); clearSession(); setM(""); };
@@ -1438,7 +1554,7 @@ function Gate({ link }) {
     <p class="sub">+91 ${m} is no longer active on the delivery team. Please contact the admin.</p>
     <button class="ghost" onClick=${logout}>Log out</button>
   </div>`;
-  return h`<${App} mobile=${m} isAdmin=${ADMIN_MOBILES.includes(m)} profile=${prof} onProfile=${save} onLogout=${logout} link=${link} />`;
+  return h`<${App} mobile=${m} isAdmin=${ADMIN_MOBILES.includes(m)} profile=${prof} onProfile=${save} onLogout=${logout} link=${link} join=${join} />`;
 }
 
 // ---- Buying list (open this page with #admin at the end of the link) ----
@@ -2352,6 +2468,8 @@ function SettingsAdmin() {
   const [gin, setGin] = useState(CFG.gstin || "");
   const [gIncl, setGIncl] = useState(CFG.gstIncl !== false);
   const [gFee, setGFee] = useState(String(CFG.gstFee || 0));
+  const [gpOn, setGpOn] = useState(CFG.groupOn !== false);
+  const [gpMin, setGpMin] = useState(String(CFG.groupMin));
   const [rates, setRates] = useState([...GST_RATES]);
   const [nr, setNr] = useState("");
   const usedBy = r => ITEMS.filter(i => +i.g === r || (r === 0 && !(+i.g > 0))).length;
@@ -2368,15 +2486,15 @@ function SettingsAdmin() {
   const hasOwn = ownDay.length + ownMin.length > 0;
   const fv = Math.round(+fee), gv = Math.round(+free), tv = Math.round(+mt), pv = Math.round(+pay);
   const bad = min === "" || !Number.isFinite(m) || m < 0 || m > 100000 || !close.trim() || !delivery.trim()
-    || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000 || bn.some(b => b.on && !b.title.trim()) || pay === "" || !Number.isFinite(pv) || pv < 0 || pv > 5000 || mt === "" || !Number.isInteger(tv) || tv < 1 || tv > 50 || (gin.trim() !== "" && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gin.trim().toUpperCase()));
+    || off.length >= CATS.length || fee === "" || !Number.isFinite(fv) || fv < 0 || fv > 5000 || free === "" || !Number.isFinite(gv) || gv < 0 || gv > 100000 || bn.some(b => b.on && !b.title.trim()) || pay === "" || !Number.isFinite(pv) || pv < 0 || pv > 5000 || mt === "" || !Number.isInteger(tv) || tv < 1 || tv > 50 || gpMin === "" || !(Math.round(+gpMin) >= 0) || Math.round(+gpMin) > 100000 || (gin.trim() !== "" && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gin.trim().toUpperCase()));
   const apply = v => {
-    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; CFG.pay = v.pay; CFG.gstOn = !!v.gstOn; CFG.gstin = v.gstin || ""; CFG.gstIncl = v.gstIncl !== false; CFG.gstFee = +v.gstFee || 0; GST_RATES = cleanRates(v.gstRates || GST_RATES); CFG.tagline = v.tagline || ""; CFG.banners = (v.banners || []).map(b => ({ ...b })); OFF_CATS = new Set(v.offCats || []);
+    CFG.min = v.min; CFG.close = v.close; CFG.delivery = v.delivery; CFG.fee = v.fee; CFG.freeAbove = v.freeAbove; CFG.maxTries = v.maxTries; CFG.pay = v.pay; CFG.groupOn = v.groupOn !== false; CFG.groupMin = +v.groupMin >= 0 ? Math.round(+v.groupMin) : 200; CFG.gstOn = !!v.gstOn; CFG.gstin = v.gstin || ""; CFG.gstIncl = v.gstIncl !== false; CFG.gstFee = +v.gstFee || 0; GST_RATES = cleanRates(v.gstRates || GST_RATES); CFG.tagline = v.tagline || ""; CFG.banners = (v.banners || []).map(b => ({ ...b })); OFF_CATS = new Set(v.offCats || []);
     try { localStorage.setItem(SETK, JSON.stringify(v)); } catch (e) {}
-    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, maxTries: v.maxTries, pay: v.pay, off: v.offCats || [], gst: v.gstOn ? (v.gstIncl ? "on, inclusive" : "on, added") : "off", by: "admin" });
+    audit("settings", { min: v.min, close: v.close, delivery: v.delivery, fee: v.fee, freeAbove: v.freeAbove, maxTries: v.maxTries, pay: v.pay, off: v.offCats || [], groups: v.groupOn !== false ? "on" : "off", gst: v.gstOn ? (v.gstIncl ? "on, inclusive" : "on, added") : "off", by: "admin" });
   };
   const save = () => {
     if (bad) return;
-    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, pay: pv, gstOn: gOn, gstin: gin.trim().toUpperCase(), gstIncl: gIncl, gstFee: +gFee || 0, gstRates: rates, tagline: tag.trim(), banners: bn, offCats: off });
+    apply({ min: m, close: close.trim(), delivery: delivery.trim(), fee: fv, freeAbove: gv, maxTries: tv, pay: pv, groupOn: gpOn, groupMin: Math.round(+gpMin) || 0, gstOn: gOn, gstin: gin.trim().toUpperCase(), gstIncl: gIncl, gstFee: +gFee || 0, gstRates: rates, tagline: tag.trim(), banners: bn, offCats: off });
     if (allSoc && hasOwn) {
       const next = SOCIETIES.map(x => ({ ...x, day: "", min: 0 }));
       SOCIETIES = next;
@@ -2384,7 +2502,7 @@ function SettingsAdmin() {
     }
     setMsg("Saved. Customers see the new line on the Home page.");
   };
-  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setGOn(false); setGin(""); setGIncl(true); setGFee("0"); setRates([0, 5, 12, 18]); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setTag(DEFAULT_TAGLINE); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setGpOn(true); setGpMin(String(SET_DEFAULT.groupMin)); setGOn(false); setGin(""); setGIncl(true); setGFee("0"); setRates([0, 5, 12, 18]); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setTag(DEFAULT_TAGLINE); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
   return h`<div class="wrap adm">
     <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
     <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
@@ -2398,6 +2516,10 @@ function SettingsAdmin() {
     <p class="note">Tick the categories customers can see. Unticked ones disappear from Home, Category, search, deals and the family box. Items stay in your catalogue.</p>
     <div class="pgs">${CATS.map((c, i) => h`<label key=${c} class="pk2"><input type="checkbox" checked=${!off.includes(i)} onChange=${e => { setOff(e.target.checked ? off.filter(x => x !== i) : [...off, i]); setMsg(""); }} /><span><b>${CAT_E[i] || "🛒"} ${c}</b><small>${ITEMS.filter(x => +x.c === i).length} items · ${off.includes(i) ? "Hidden from customers" : "Shown to customers"}</small></span></label>`)}</div>
     ${off.length >= CATS.length && h`<p class="warn">At least one category must stay on.</p>`}
+    <h2 style=${{ margin: "14px 0 4px" }}>Group ordering</h2>
+    <label class="pk2"><input type="checkbox" checked=${gpOn} onChange=${e => { setGpOn(e.target.checked); setMsg(""); }} /><span><b>Let customers order in groups</b><small>Neighbours join a group by link, each places their own order, and the delivery fee is shared. Turning this off hides groups from customers; existing groups are kept.</small></span></label>
+    ${gpOn && h`<label>Minimum order for each member in a group (₹)<input type="number" inputMode="numeric" min="0" value=${gpMin} onChange=${e => { setGpMin(e.target.value); setMsg(""); }} onInput=${e => { setGpMin(e.target.value); setMsg(""); }} /></label>`}
+    ${gpOn && h`<p class="note">Group members can order less than the normal minimum (₹${CFG.min}). Delivery is free for everyone once the group's total reaches ₹${CFG.freeAbove}.</p>`}
     <h2 style=${{ margin: "14px 0 4px" }}>GST</h2>
     <label class="pk2"><input type="checkbox" checked=${gOn} onChange=${e => { setGOn(e.target.checked); setMsg(""); }} /><span><b>Charge GST on bills</b><small>Keep this off until your CA confirms you are registered and which rates apply. Set each item's GST % and HSN in Catalogue.</small></span></label>
     ${gOn && h`<div>
@@ -2485,8 +2607,9 @@ function Root() {
     window.addEventListener("hashchange", f);
     return () => window.removeEventListener("hashchange", f);
   }, []);
-  const link = hs && hs !== "#admin" ? SOCIETIES.find(x => x.id === hs.slice(1)) || null : null;
-  return hs === "#admin" ? h`<${AdminGate} />` : h`<${Gate} link=${link} />`;
+  const join = /^#g-/i.test(hs) ? hs.slice(3).toUpperCase() : "";
+  const link = hs && hs !== "#admin" && !join ? SOCIETIES.find(x => x.id === hs.slice(1)) || null : null;
+  return hs === "#admin" ? h`<${AdminGate} />` : h`<${Gate} link=${link} join=${join} />`;
 }
 
 migrateOrders();
