@@ -254,6 +254,12 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .grpcard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:12px;margin:0 0 12px;cursor:pointer}
 .grpcard>span:first-child{font-size:26px}.grpcard>span:nth-child(2){flex:1;min-width:0}.grpcard b{display:block}.grpcard small{display:block;color:var(--mut);font-weight:400;font-size:13px;margin-top:2px}.grpcard i{font-style:normal;font-size:22px;color:var(--mut)}
 .grpbox{margin:0 0 12px}
+.cfil{position:sticky;top:0;background:var(--bg);z-index:4;padding:6px 0 0}.cfil input[type=search]{width:100%}
+.cx{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 8px;align-items:end;padding:10px}
+.cx .cxn{grid-column:1/-1;display:flex;align-items:center;gap:8px;text-align:left;background:none;border:0;color:var(--ink);padding:0;font-size:15px}.cx .cxn b{flex:1;min-width:0}.cx .cxn i{font-style:normal;color:var(--mut)}
+.cx label{display:block;margin:0}.cx label input{width:100%;min-width:0;padding:8px 6px}.cx .cxs{grid-column:1/-1}.cx .cxd{grid-column:1/-1;border-top:1px solid var(--line);padding-top:8px}
+.cxh{display:none}
+@media(min-width:720px){.cx{grid-template-columns:minmax(0,1fr) 88px 88px 88px 120px}.cx .cxn{grid-column:auto}.cx label small{display:none}.cx .cxs{grid-column:auto}.cxh{display:grid;padding:4px 10px;font-size:12px;color:var(--mut);border:0;background:none}}
 .savebar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 0 12px;margin-top:14px;z-index:5}
 .tab .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cta);margin-left:6px;vertical-align:middle}
 .bsum{margin:8px 0;font-size:14px;color:var(--mut)}
@@ -1933,10 +1939,29 @@ function Catalogue() {
   const out = "[\n" + items.map(x => "  " + JSON.stringify(normItem(x))).join(",\n") + "\n]";
   const copy = () => { try { navigator.clipboard.writeText(out).then(() => setCopied(true)); } catch (e) { setCopied(false); } };
   const inp = (x, k, label, type) => h`<div><small>${label}</small><input type=${type || "number"} inputmode=${type ? "text" : "decimal"} min="0" aria-label=${x.n + " " + label} value=${x[k] === undefined ? "" : x[k]} onInput=${e => edit(x.id, k, e.target.value)} /></div>`;
+  const [q, setQ] = useState("");
+  const [fc, setFc] = useState(-1);
+  const [np, setNp] = useState(null);
+  const [ex, setEx] = useState(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const needs = items.filter(x => !(+x.p > 0)).length;
+  const qq = q.trim().toLowerCase();
+  const show = x => (fc < 0 || +x.c === fc) && (!np || np.has(x.id)) && (!qq || x.n.toLowerCase().includes(qq));
+  const chip = x => !(+x.p > 0) ? h`<span class="chip st-bad">Needs price</span>` : +x.cost > 0 ? (+x.p > +x.cost ? h`<span class="chip st-ok">+₹${Math.round((x.p - x.cost) * 100) / 100} · ${Math.round((x.p - x.cost) / x.p * 100)}%</span>` : h`<span class="chip st-bad">Below cost</span>`) : "";
+  const shown = items.filter(show).length;
   return h`<div class="wrap adm">
-    <header><h1>Catalogue</h1><p class="sub">Add items and set your price and the local price to show struck out. Edits are saved on this device as a draft.</p></header>
+    <header><h1>Catalogue</h1><p class="sub">Set Buy, Your and Local prices. Tap an item's name for more. Edits are saved on this device as a draft.</p></header>
+    <div class="cfil">
+      <input type="search" placeholder="Search items" aria-label="Search items" value=${q} onInput=${e => setQ(e.target.value)} />
+      <div class="tabs" role="group" aria-label="Filter by category">
+        <button class="tab" aria-pressed=${fc < 0} onClick=${() => setFc(-1)}>All</button>
+        ${CATS.map((c, i) => h`<button key=${c} class="tab" aria-pressed=${fc === i} onClick=${() => setFc(fc === i ? -1 : i)}>${c}</button>`)}
+        <button class="tab" aria-pressed=${!!np} onClick=${() => setNp(np ? null : new Set(items.filter(x => !(+x.p > 0)).map(x => x.id)))}>Needs price (${needs})</button>
+      </div>
+    </div>
     <div class="ci addbox">
-      <b>Add an item</b>
+      <button class="lk" style=${{ textAlign: "left", fontWeight: 700 }} aria-expanded=${addOpen} onClick=${() => setAddOpen(!addOpen)}>${addOpen ? "− Close" : "+ Add an item"}</button>
+      ${addOpen && h`<div>
       <div class="l1"><input value=${nf.e} placeholder="🥦" aria-label="Emoji" onInput=${e => setNf({ ...nf, e: e.target.value })} /><input value=${nf.n} placeholder="Item name" aria-label="Item name" onInput=${e => setNf({ ...nf, n: e.target.value })} />
         <select aria-label="Category" value=${nf.c} onChange=${e => setNf({ ...nf, c: +e.target.value })}>${CATS.map((c, i) => h`<option key=${c} value=${i}>${c.slice(0, 3)}</option>`)}</select></div>
       <div class="l2">
@@ -1947,24 +1972,32 @@ function Catalogue() {
       </div>
       <div class="l2"><div><small>GST %</small><select aria-label="GST rate" value=${nf.g} onChange=${e => setNf({ ...nf, g: e.target.value })}>${GST_RATES.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></div><div style=${{ gridColumn: "span 3" }}><small>HSN code (optional)</small><input inputmode="numeric" maxLength="8" aria-label="HSN code" value=${nf.hsn} onInput=${e => setNf({ ...nf, hsn: e.target.value })} /></div></div>
       <button class="cta" disabled=${!nf.n.trim() || !(+nf.p > 0)} onClick=${add}>Add to ${CATS[nf.c]}</button>
+      </div>`}
     </div>
-    ${CATS.map((cn, ci) => h`<div key=${cn}><h2>${cn}${OFF_CATS.has(ci) ? " (hidden from customers)" : ""}</h2><ul>
-      ${items.filter(x => +x.c === ci).map(x => h`<li key=${x.id} class="ci">
-        <div class="l1"><input value=${x.e || ""} aria-label=${x.n + " emoji"} onInput=${e => edit(x.id, "e", e.target.value)} /><input value=${x.n} aria-label=${"Name of " + x.n} onInput=${e => edit(x.id, "n", e.target.value)} /><button class="dl" aria-label=${"Delete " + x.n} onClick=${() => del(x.id)}>×</button></div>
-        <div class="l2">${inp(x, "u", "Unit", "text")}${inp(x, "p", "Your ₹")}${inp(x, "mrp", "Local ₹")}${inp(x, "w", "Kg/unit")}</div>
-        <div class="l2">${inp(x, "cost", "Buy ₹ (APMC)")}<div style=${{ gridColumn: "span 3", alignSelf: "end" }}>${+x.p > 0 && +x.cost > 0 ? h`<small class=${+x.p > +x.cost ? "good" : "warn"}>${+x.p > +x.cost ? "Margin ₹" + Math.round((x.p - x.cost) * 100) / 100 + " per " + x.u + " (" + Math.round((x.p - x.cost) / x.p * 100) + "%)" : "Your price is not above the buying price"}</small>` : !(+x.p > 0) ? h`<small class="warn">Not shown to customers until you set Your ₹</small>` : ""}</div></div>
-        <div class="l2"><div><small>GST %</small><select aria-label=${x.n + " GST rate"} value=${+x.g || 0} onChange=${e => edit(x.id, "g", +e.target.value)}>${GST_RATES.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></div><div style=${{ gridColumn: "span 3" }}>${inp(x, "hsn", "HSN code", "text")}</div></div>
+    ${shown === 0 && h`<p class="note">No items match. Clear the search or filters.</p>`}
+    ${CATS.map((cn, ci) => { const list = items.filter(x => +x.c === ci && show(x)); return list.length === 0 ? null : h`<div key=${cn}><h2>${cn} <small>(${list.length})</small>${OFF_CATS.has(ci) ? " · hidden from customers" : ""}</h2>
+      <div class="cx cxh" aria-hidden="true"><span>Item</span><span>Buy ₹</span><span>Your ₹</span><span>Local ₹</span><span></span></div>
+      <ul>${list.map(x => { const isEx = ex === x.id; return h`<li key=${x.id} class="ci cx">
+        <button class="cxn" aria-expanded=${isEx} onClick=${() => { setEx(isEx ? null : x.id); setPOpen(null); setPMsg(""); }}><span aria-hidden="true">${x.e || "🛒"}</span><b>${x.n}</b><i aria-hidden="true">${isEx ? "▴" : "▾"}</i></button>
+        <label><small>Buy ₹</small><input type="number" inputmode="decimal" min="0" aria-label=${x.n + " buy price"} placeholder="0" value=${x.cost === undefined || x.cost === 0 ? "" : x.cost} onInput=${e => edit(x.id, "cost", e.target.value)} /></label>
+        <label><small>Your ₹</small><input type="number" inputmode="decimal" min="0" aria-label=${x.n + " your price"} placeholder="0" value=${x.p === undefined || x.p === 0 ? "" : x.p} onInput=${e => edit(x.id, "p", e.target.value)} /></label>
+        <label><small>Local ₹</small><input type="number" inputmode="decimal" min="0" aria-label=${x.n + " local price"} placeholder="0" value=${x.mrp === undefined || x.mrp === 0 ? "" : x.mrp} onInput=${e => edit(x.id, "mrp", e.target.value)} /></label>
+        <span class="cxs">${chip(x)}</span>
+        ${isEx && h`<div class="cxd">
+          <div class="l1"><input value=${x.e || ""} aria-label=${x.n + " emoji"} onInput=${e => edit(x.id, "e", e.target.value)} /><input value=${x.n} aria-label=${"Name of " + x.n} onInput=${e => edit(x.id, "n", e.target.value)} /><button class="dl" aria-label=${"Delete " + x.n} onClick=${() => { del(x.id); setEx(null); }}>×</button></div>
+          <div class="l2">${inp(x, "u", "Unit", "text")}${inp(x, "w", "Kg/unit")}<div><small>GST %</small><select aria-label=${x.n + " GST rate"} value=${+x.g || 0} onChange=${e => edit(x.id, "g", +e.target.value)}>${GST_RATES.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></div>${inp(x, "hsn", "HSN code", "text")}</div>
         <button class="lk" style=${{ textAlign: "left" }} onClick=${() => { setPOpen(pOpen === x.id ? null : x.id); setPMsg(""); }}>📷 Photos (${(pm[x.id] || []).length})</button>
-        ${pOpen === x.id && h`<div class="pm">
-          <div class="pgrid">${(pm[x.id] || []).map((u, j) => h`<div key=${j} class="pth"><img src=${u} alt=${x.n + " photo " + (j + 1)} /><button aria-label=${"Remove photo " + (j + 1)} onClick=${() => rmPhoto(x.id, j)}>×</button></div>`)}</div>
-          ${(pm[x.id] || []).length < 6 ? h`<label class="up">Add photos<input type="file" accept="image/*" multiple onChange=${e => addFiles(x.id, e)} /></label>` : h`<p class="note">Maximum 6 photos per item.</p>`}
-          ${pMsg && h`<p class="warn">${pMsg}</p>`}
-          <p class="note" style=${{ margin: 0 }}>Photos are saved on this device only. Use clear photos of the real item.</p>
+          ${pOpen === x.id && h`<div class="pm">
+            <div class="pgrid">${(pm[x.id] || []).map((u, j) => h`<div key=${j} class="pth"><img src=${u} alt=${x.n + " photo " + (j + 1)} /><button aria-label=${"Remove photo " + (j + 1)} onClick=${() => rmPhoto(x.id, j)}>×</button></div>`)}</div>
+            ${(pm[x.id] || []).length < 6 ? h`<label class="up">Add photos<input type="file" accept="image/*" multiple onChange=${e => addFiles(x.id, e)} /></label>` : h`<p class="note">Maximum 6 photos per item.</p>`}
+            ${pMsg && h`<p class="warn">${pMsg}</p>`}
+            <p class="note" style=${{ margin: 0 }}>Photos are saved on this device only. Use clear photos of the real item.</p>
+          </div>`}
+          ${+x.mrp > 0 && +x.mrp <= +x.p && h`<p class="warn" style=${{ margin: 0 }}>Local price should be higher than yours to show a strikeout.</p>`}
+          ${+x.mrp > +x.p && h`<p class="note good" style=${{ margin: 0 }}>Customers see ₹${x.mrp} struck out, ${Math.round((x.mrp - x.p) / x.mrp * 100)}% off.</p>`}
         </div>`}
-        ${+x.mrp > 0 && +x.mrp <= +x.p && h`<p class="warn" style=${{ margin: 0 }}>Local price should be higher than yours to show a strikeout.</p>`}
-        ${+x.mrp > +x.p && h`<p class="note good" style=${{ margin: 0 }}>Customers see ₹${x.mrp} struck out, ${Math.round((x.mrp - x.p) / x.mrp * 100)}% off.</p>`}
-      </li>`)}
-    </ul></div>`)}
+      </li>`; })}
+    </ul></div>`; })}
     <h2>Send changes to customers</h2>
     <p class="note">Customers only see the catalogue built into the page, so a change here is a draft on your device. To make it live, copy the list below and send it to Claude, or paste it over DEFAULT_ITEMS in your hosted file. To preview, open the order page in this same browser.</p>
     <textarea readOnly value=${out} style=${{ minHeight: 140, width: "100%", fontSize: 12 }}></textarea>
