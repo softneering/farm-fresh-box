@@ -1846,7 +1846,7 @@ function PriceCheck() {
   const setP = (id, k, v) => setSt({ ...st, p: { ...st.p, [id]: { ...(st.p[id] || {}), [k]: v } } });
   const rows = ITEMS.map(i => {
     const r = st.p[i.id] || {};
-    const a = num(r.apmc), l = num(r.local), p = num(r.app);
+    const a = num(r.apmc) || num(i.cost), l = num(r.local) || num(i.mrp), p = num(r.app);
     const alts = [l, p].filter(x => x > 0);
     if (!(a > 0 && alts.length)) return { i, r, done: false };
     const sell = Math.round(Math.min(...alts) * (1 - num(st.cut) / 100));
@@ -1865,12 +1865,22 @@ function PriceCheck() {
   else { vd = "Weak: the price gap is too small on most items to cover wastage and costs."; cls = "bad"; }
   const reset = () => setSt({ p: {}, waste: st.waste, cut: st.cut });
   const setG = k => e => setSt({ ...st, [k]: e.target.value });
+  const [q, setQ] = useState("");
+  const [fc, setFc] = useState(-1);
+  const [fv, setFv] = useState(null);
+  const [, bump] = useState(0);
+  const view = fv || (done.length ? "done" : "todo");
+  const useSell = (it, sell) => {
+    ITEMS = ITEMS.map(x => x.id === it.id ? { ...x, p: sell } : x);
+    try { localStorage.setItem(CK, JSON.stringify(ITEMS.map(normItem))); } catch (e) {}
+    bump(n => n + 1);
+  };
+  const qq = q.trim().toLowerCase();
+  let list = rows.filter(x => (view === "done" ? x.done : !x.done) && (fc < 0 || +x.i.c === fc) && (!qq || x.i.n.toLowerCase().includes(qq)));
+  if (view === "done") list = [...list].sort((m, n) => m.margin - n.margin);
+  const field = (x, k, label, cat) => h`<label><small>${label}</small><input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " " + label} placeholder=${cat > 0 ? String(cat) : "0"} value=${x.r[k] || ""} onInput=${e => setP(x.i.id, k, e.target.value)} /></label>`;
   return h`<div class="wrap adm">
-    <header><h1>Price check</h1><p class="sub">Enter prices per unit as shown. Leave blank what you did not check. Your entries are saved on this device.</p></header>
-    <div class="fg">
-      <label>Extra bought for wastage (%)<input type="number" inputmode="decimal" min="0" value=${st.waste} onInput=${setG("waste")} /></label>
-      <label>Sell below the cheapest rival by (%)<input type="number" inputmode="decimal" min="0" value=${st.cut} onInput=${setG("cut")} /></label>
-    </div>
+    <header><h1>Price check</h1><p class="sub">APMC and Local prices come from the Catalogue (grey numbers). Type a price only to try a different one. Saved on this device.</p></header>
     <div class="sm sm2">
       <div><b>${done.length}</b><span>items checked</span></div>
       <div><b>${gaps.length ? avgGap.toFixed(0) + "%" : "–"}</b><span>average APMC gap vs app</span></div>
@@ -1878,15 +1888,25 @@ function PriceCheck() {
       <div><b>${good}</b><span>items with 15%+ margin</span></div>
     </div>
     <p class=${"vd " + cls}>${vd}</p>
-    <div class="pch"><span>Item</span><span>APMC ₹</span><span>Local ₹</span><span>App ₹</span></div>
-    <ul>${rows.map(x => h`<li key=${x.i.id} class="pc">
-      <div class="t">
-        <div><b>${x.i.e} ${x.i.n}</b><div class="note" style=${{ margin: 0 }}>per ${x.i.u}</div></div>
-        <input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " APMC price"} value=${x.r.apmc || ""} onInput=${e => setP(x.i.id, "apmc", e.target.value)} />
-        <input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " local seller price"} value=${x.r.local || ""} onInput=${e => setP(x.i.id, "local", e.target.value)} />
-        <input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " app price"} value=${x.r.app || ""} onInput=${e => setP(x.i.id, "app", e.target.value)} />
+    <details class="sd"><summary>Assumptions: ${num(st.waste)}% wastage, ${num(st.cut)}% below the cheapest rival</summary>
+      <div class="fg">
+        <label>Extra bought for wastage (%)<input type="number" inputmode="decimal" min="0" value=${st.waste} onInput=${setG("waste")} /></label>
+        <label>Sell below the cheapest rival by (%)<input type="number" inputmode="decimal" min="0" value=${st.cut} onInput=${setG("cut")} /></label>
       </div>
-      ${x.done && h`<div class=${"r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")}>Sell at ${inr(x.sell)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</div>`}
+    </details>
+    <div class="cfil">
+      <input type="search" placeholder="Search items" aria-label="Search items" value=${q} onInput=${e => setQ(e.target.value)} />
+      <div class="tabs" role="group" aria-label="Filter">
+        <button class="tab" aria-pressed=${view === "done"} onClick=${() => setFv("done")}>Checked (${done.length})</button>
+        <button class="tab" aria-pressed=${view === "todo"} onClick=${() => setFv("todo")}>Not checked (${rows.length - done.length})</button>
+        ${CATS.map((c, i) => h`<button key=${c} class="tab" aria-pressed=${fc === i} onClick=${() => setFc(fc === i ? -1 : i)}>${c}</button>`)}
+      </div>
+    </div>
+    ${list.length === 0 && h`<p class="note">${view === "done" ? "Nothing checked yet. An item counts as checked once it has an APMC (Buy) price and a Local or App price. Fill those in the Catalogue, or open Not checked and type them here." : "No items match."}</p>`}
+    <ul>${list.map(x => h`<li key=${x.i.id} class="ci cx">
+      <div class="cxn" style=${{ cursor: "default" }}><span aria-hidden="true">${x.i.e}</span><b>${x.i.n} <small>per ${x.i.u}</small></b></div>
+      ${field(x, "apmc", "APMC ₹", +x.i.cost)}${field(x, "local", "Local ₹", +x.i.mrp)}${field(x, "app", "App ₹", 0)}
+      ${x.done && h`<div class=${"cxs r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")} style=${{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span>Sell at ${inr(x.sell)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</span>${+x.i.p === x.sell ? h`<span class="chip st-ok">Your ₹ is set</span>` : h`<button class="ghost" style=${{ padding: "4px 10px" }} onClick=${() => useSell(x.i, x.sell)}>Use ₹${x.sell}</button>`}</div>`}
     </li>`)}</ul>
     <p class="note" style=${{ marginTop: 12 }}>Suggested sell price = the cheaper of the local seller and the app, minus your discount. Margin is after your wastage allowance and does not include delivery, packing or labour. Check the same quality and the same pack size on each platform.</p>
     <button class="lk" onClick=${reset}>Clear all prices</button>
