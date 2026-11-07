@@ -407,24 +407,35 @@ const DEFAULT_ITEMS = [
   { id: "ora", c: 1, n: "Orange", e: "🍊", u: "kg", p: 80, mrp: 110 },
   { id: "lem", c: 1, n: "Lemon", e: "🍋", u: "6 pcs", p: 30, mrp: 40, w: 0.3 },
   { id: "gra", c: 1, n: "Grapes", e: "🍇", u: "kg", p: 90, mrp: 130 },
-  { id: "tur", c: 2, n: "Toor dal", e: "🟡", u: "kg", p: 150, mrp: 180 },
+  // Real buying rates from APMC (7 Nov 2026), "cost" is per kg. No selling price yet (p: 0), so these stay hidden from customers until you set "Your ₹" in Catalogue.
+  { id: "tur", c: 2, n: "Toor dal", e: "🟡", u: "kg", p: 0, mrp: 0, cost: 140 },
+  { id: "rch-a", c: 2, n: "Red chana – Quality A", e: "🟤", u: "kg", p: 0, mrp: 0, cost: 110 },
+  { id: "rch-b", c: 2, n: "Red chana – Quality B", e: "🟤", u: "kg", p: 0, mrp: 0, cost: 94 },
+  { id: "rch-c", c: 2, n: "Red chana – Quality C", e: "🟤", u: "kg", p: 0, mrp: 0, cost: 88 },
+  { id: "kab-a", c: 2, n: "Kabuli chana – Quality A", e: "🫘", u: "kg", p: 0, mrp: 0, cost: 105 },
+  { id: "kab-b", c: 2, n: "Kabuli chana – Quality B", e: "🫘", u: "kg", p: 0, mrp: 0, cost: 95 },
+  { id: "kab-c", c: 2, n: "Kabuli chana – Quality C", e: "🫘", u: "kg", p: 0, mrp: 0, cost: 88 },
+  { id: "raj", c: 2, n: "Rajma", e: "🫘", u: "kg", p: 0, mrp: 0, cost: 130 },
+  { id: "mog-a", c: 2, n: "Moong – Quality A", e: "🟢", u: "kg", p: 0, mrp: 0, cost: 115 },
+  { id: "mog-b", c: 2, n: "Moong – Quality B", e: "🟢", u: "kg", p: 0, mrp: 0, cost: 110 },
+  { id: "mog-c", c: 2, n: "Moong – Quality C", e: "🟢", u: "kg", p: 0, mrp: 0, cost: 104 },
+  { id: "mas-a", c: 2, n: "Red masoor dal – Quality A", e: "🔴", u: "kg", p: 0, mrp: 0, cost: 80 },
+  { id: "mas-b", c: 2, n: "Red masoor dal – Quality B", e: "🔴", u: "kg", p: 0, mrp: 0, cost: 75 },
+  { id: "chw-a", c: 2, n: "Chawli – Quality A", e: "🫘", u: "kg", p: 0, mrp: 0, cost: 95 },
+  { id: "chw-b", c: 2, n: "Chawli – Quality B", e: "🫘", u: "kg", p: 0, mrp: 0, cost: 90 },
   { id: "mdl", c: 2, n: "Moong dal", e: "🟨", u: "kg", p: 120, mrp: 150 },
   { id: "cdl", c: 2, n: "Chana dal", e: "🟠", u: "kg", p: 95, mrp: 120 },
-  { id: "mas", c: 2, n: "Masoor dal", e: "🔴", u: "kg", p: 90, mrp: 115 },
   { id: "urd", c: 2, n: "Urad dal", e: "⚪", u: "kg", p: 130, mrp: 160 },
-  { id: "mog", c: 2, n: "Whole moong", e: "🟢", u: "kg", p: 110, mrp: 140 },
-  { id: "kab", c: 2, n: "Kabuli chana", e: "🫘", u: "kg", p: 120, mrp: 150 },
-  { id: "raj", c: 2, n: "Rajma", e: "🫘", u: "kg", p: 140, mrp: 180 },
   { id: "kal", c: 2, n: "Kala chana", e: "🟤", u: "kg", p: 90, mrp: 115 },
   { id: "mat", c: 2, n: "Matki (moth beans)", e: "🫘", u: "kg", p: 120, mrp: 150 },
-  { id: "att", c: 3, n: "Wheat atta", e: "🌾", u: "kg", p: 42, mrp: 55 },
+  { id: "att", c: 3, n: "Wheat atta", e: "🌾", u: "kg", p: 0, mrp: 0, cost: 37 },
+  { id: "bes", c: 3, n: "Besan", e: "🌾", u: "kg", p: 0, mrp: 0, cost: 104 },
   { id: "kol", c: 3, n: "Kolam rice", e: "🍚", u: "kg", p: 55, mrp: 70 },
   { id: "ric", c: 3, n: "Basmati rice", e: "🍚", u: "kg", p: 90, mrp: 110 },
   { id: "sug", c: 3, n: "Sugar", e: "🍬", u: "kg", p: 45, mrp: 52 },
   { id: "sal", c: 3, n: "Salt", e: "🧂", u: "kg", p: 22, mrp: 28 },
   { id: "poh", c: 3, n: "Poha", e: "🥣", u: "kg", p: 55, mrp: 70 },
   { id: "rav", c: 3, n: "Rava (sooji)", e: "🌾", u: "kg", p: 45, mrp: 58 },
-  { id: "bes", c: 3, n: "Besan", e: "🌾", u: "kg", p: 85, mrp: 110 },
   { id: "oil", c: 3, n: "Groundnut oil", e: "🛢️", u: "litre", p: 180, mrp: 220, w: 0.9 },
   { id: "jag", c: 3, n: "Jaggery (gul)", e: "🟫", u: "kg", p: 60, mrp: 80 },
   { id: "alm", c: 4, n: "Almonds (badam)", e: "🌰", u: "kg", p: 750, mrp: 950 },
@@ -451,6 +462,16 @@ function loadCatalogue() {
   try {
     const o = JSON.parse(localStorage.getItem(CK) || "null");
     if (Array.isArray(o) && o.length && o.every(x => x && x.id && x.n)) {
+      // one-time: bring in the APMC-rate items (existing prices you edited are kept)
+      try {
+        if (localStorage.getItem("wfb_cat_seed2") !== "1") {
+          const seeds = DEFAULT_ITEMS.filter(x => x.cost > 0), drop = { kab: 120, mog: 110, mas: 90, tur: -1 };
+          let l = o.filter(x => !(x.id in drop && drop[x.id] > 0 && +x.p === drop[x.id]));
+          seeds.forEach(sd => { const k = l.findIndex(x => x.id === sd.id); if (k >= 0) l[k] = { ...l[k], cost: sd.cost }; else l.push({ ...sd }); });
+          localStorage.setItem(CK, JSON.stringify(l)); localStorage.setItem("wfb_cat_seed2", "1");
+          o.length = 0; l.forEach(x => o.push(x));
+        }
+      } catch (e) {}
       // add the Dry food items to catalogues saved before that category existed
       if (!o.some(x => +x.c === 4)) return o.concat(DEFAULT_ITEMS.filter(x => x.c === 4).map(x => ({ ...x })));
       return o;
@@ -507,7 +528,7 @@ const csvCell = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"
 const societiesCsv = list => ["society,area,pincode,buildings,day,drop point,min order,status,aliases"].concat(list.map(x => [x.name, x.area, x.pincode, (x.buildings || []).join(";"), x.day, x.drop, x.min || "", x.status, (x.alias || []).join(";")].map(csvCell).join(","))).join("\n");
 const BOX = { name: "Family Veg Box", items: { tom: 2, pot: 2, oni: 2, car: 1, spi: 2, cap: 1 } };
 const boxLines = () => Object.keys(BOX.items).map(k => ({ it: ITEMS.find(i => i.id === k), q: BOX.items[k] })).filter(x => x.it && !OFF_CATS.has(+x.it.c));
-const shopItems = () => ITEMS.filter(i => !OFF_CATS.has(+i.c));
+const shopItems = () => ITEMS.filter(i => !OFF_CATS.has(+i.c) && +i.p > 0);
 const boxPrice = () => boxLines().reduce((s, x) => s + x.q * x.it.p, 0);
 
 function Stepper({ q, label, onAdd, onSub }) {
@@ -1867,7 +1888,7 @@ function PriceCheck() {
 }
 
 // ---- Catalogue editor ----
-const normItem = x => ({ id: x.id, c: +x.c, e: x.e || "🛒", n: x.n, u: x.u || "kg", p: +x.p || 0, mrp: +x.mrp || 0, ...(+x.w > 0 ? { w: +x.w } : {}), ...(GST_RATES.includes(+x.g) && +x.g > 0 ? { g: +x.g } : {}), ...(String(x.hsn || "").trim() ? { hsn: String(x.hsn).trim().replace(/\D/g, "").slice(0, 8) } : {}) });
+const normItem = x => ({ id: x.id, c: +x.c, e: x.e || "🛒", n: x.n, u: x.u || "kg", p: +x.p || 0, mrp: +x.mrp || 0, ...(+x.w > 0 ? { w: +x.w } : {}), ...(+x.cost > 0 ? { cost: +x.cost } : {}), ...(GST_RATES.includes(+x.g) && +x.g > 0 ? { g: +x.g } : {}), ...(String(x.hsn || "").trim() ? { hsn: String(x.hsn).trim().replace(/\D/g, "").slice(0, 8) } : {}) });
 
 function Catalogue() {
   const [items, setItems] = useState(ITEMS.map(x => ({ ...x })));
@@ -1931,6 +1952,7 @@ function Catalogue() {
       ${items.filter(x => +x.c === ci).map(x => h`<li key=${x.id} class="ci">
         <div class="l1"><input value=${x.e || ""} aria-label=${x.n + " emoji"} onInput=${e => edit(x.id, "e", e.target.value)} /><input value=${x.n} aria-label=${"Name of " + x.n} onInput=${e => edit(x.id, "n", e.target.value)} /><button class="dl" aria-label=${"Delete " + x.n} onClick=${() => del(x.id)}>×</button></div>
         <div class="l2">${inp(x, "u", "Unit", "text")}${inp(x, "p", "Your ₹")}${inp(x, "mrp", "Local ₹")}${inp(x, "w", "Kg/unit")}</div>
+        <div class="l2">${inp(x, "cost", "Buy ₹ (APMC)")}<div style=${{ gridColumn: "span 3", alignSelf: "end" }}>${+x.p > 0 && +x.cost > 0 ? h`<small class=${+x.p > +x.cost ? "good" : "warn"}>${+x.p > +x.cost ? "Margin ₹" + Math.round((x.p - x.cost) * 100) / 100 + " per " + x.u + " (" + Math.round((x.p - x.cost) / x.p * 100) + "%)" : "Your price is not above the buying price"}</small>` : !(+x.p > 0) ? h`<small class="warn">Not shown to customers until you set Your ₹</small>` : ""}</div></div>
         <div class="l2"><div><small>GST %</small><select aria-label=${x.n + " GST rate"} value=${+x.g || 0} onChange=${e => edit(x.id, "g", +e.target.value)}>${GST_RATES.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></div><div style=${{ gridColumn: "span 3" }}>${inp(x, "hsn", "HSN code", "text")}</div></div>
         <button class="lk" style=${{ textAlign: "left" }} onClick=${() => { setPOpen(pOpen === x.id ? null : x.id); setPMsg(""); }}>📷 Photos (${(pm[x.id] || []).length})</button>
         ${pOpen === x.id && h`<div class="pm">
