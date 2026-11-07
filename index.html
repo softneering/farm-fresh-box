@@ -258,8 +258,9 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .cx{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 8px;align-items:end;padding:10px}
 .cx .cxn{grid-column:1/-1;display:flex;align-items:center;gap:8px;text-align:left;background:none;border:0;color:var(--ink);padding:0;font-size:15px}.cx .cxn b{flex:1;min-width:0}.cx .cxn i{font-style:normal;color:var(--mut)}
 .cx label{display:block;margin:0}.cx label input{width:100%;min-width:0;padding:8px 6px}.cx .cxs{grid-column:1/-1}.cx .cxd{grid-column:1/-1;border-top:1px solid var(--line);padding-top:8px}
+.cx4{grid-template-columns:repeat(4,minmax(0,1fr))}.cx4 label input{padding:8px 4px;font-size:15px}
 .cxh{display:none}
-@media(min-width:720px){.cx{grid-template-columns:minmax(0,1fr) 88px 88px 88px 120px}.cx .cxn{grid-column:auto}.cx label small{display:none}.cx .cxs{grid-column:auto}.cxh{display:grid;padding:4px 10px;font-size:12px;color:var(--mut);border:0;background:none}}
+@media(min-width:720px){.cx{grid-template-columns:minmax(0,1fr) 88px 88px 88px 120px}.cx4{grid-template-columns:minmax(0,1fr) 88px 88px 88px 88px}.cx4 .cxs{grid-column:1/-1}.cx .cxn{grid-column:auto}.cx label small{display:none}.cx .cxs{grid-column:auto}.cxh{display:grid;padding:4px 10px;font-size:12px;color:var(--mut);border:0;background:none}}
 .savebar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 0 12px;margin-top:14px;z-index:5}
 .tab .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cta);margin-left:6px;vertical-align:middle}
 .bsum{margin:8px 0;font-size:14px;color:var(--mut)}
@@ -1841,11 +1842,17 @@ function PriceCheck() {
     return { p: {}, waste: 10, cut: 15 };
   };
   const [st, setSt] = useState(init);
+  const [, bump] = useState(0);
   React.useEffect(() => { try { localStorage.setItem("wfb_prices", JSON.stringify(st)); } catch (e) {} }, [st]);
   const num = x => +x || 0;
   const EX = [["load", "Loading at the market"], ["trans", "Transport to your store"], ["unload", "Unloading at your store"], ["pack", "Packaging"], ["dsoc", "Delivery to the society"], ["dcust", "Delivery to the customer"]];
   const exTot = EX.reduce((t, [k]) => t + num((st.ex || {})[k]), 0);
   const setEx = (k, v) => setSt({ ...st, ex: { ...(st.ex || {}), [k]: v } });
+  const setOwn = (it, v) => {
+    ITEMS = ITEMS.map(x => x.id === it.id ? { ...x, p: v } : x);
+    try { localStorage.setItem(CK, JSON.stringify(ITEMS.map(normItem))); } catch (e) {}
+    bump(n => n + 1);
+  };
   const setP = (id, k, v) => setSt({ ...st, p: { ...st.p, [id]: { ...(st.p[id] || {}), [k]: v } } });
   const rows = ITEMS.map(i => {
     const r = st.p[i.id] || {};
@@ -1872,7 +1879,6 @@ function PriceCheck() {
   const [q, setQ] = useState("");
   const [fc, setFc] = useState(-1);
   const [fv, setFv] = useState(null);
-  const [, bump] = useState(0);
   const view = fv || (done.length ? "done" : "todo");
   const useSell = (it, sell, a, l) => {
     ITEMS = ITEMS.map(x => x.id === it.id ? { ...x, p: sell, ...(l > 0 ? { mrp: l } : {}), ...(a > 0 ? { cost: a } : {}) } : x);
@@ -1884,7 +1890,7 @@ function PriceCheck() {
   if (view === "done") list = [...list].sort((m, n) => m.margin - n.margin);
   const field = (x, k, label, cat) => h`<label><small>${label}</small><input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " " + label} placeholder=${cat > 0 ? String(cat) : "0"} value=${x.r[k] || ""} onInput=${e => setP(x.i.id, k, e.target.value)} /></label>`;
   return h`<div class="wrap adm">
-    <header><h1>Price check</h1><p class="sub">APMC and Local prices come from the Catalogue (grey numbers). Type a price only to try a different one. Saved on this device.</p></header>
+    <header><h1>Price check</h1><p class="sub">APMC and Local prices come from the Catalogue (grey numbers). Your App ₹ is your Catalogue price and changes there when you edit it. Saved on this device.</p></header>
     <div class="sm sm2">
       <div><b>${done.length}</b><span>items checked</span></div>
       <div><b>${gaps.length ? avgGap.toFixed(0) + "%" : "–"}</b><span>average APMC gap vs app</span></div>
@@ -1892,10 +1898,10 @@ function PriceCheck() {
       <div><b>${good}</b><span>items with 15%+ margin</span></div>
     </div>
     <p class=${"vd " + cls}>${vd}</p>
-    <details class="sd"><summary>Assumptions: ${num(st.waste)}% wastage, ${num(st.cut)}% below the cheapest rival${exTot > 0 ? ", ₹" + Math.round(exTot * 100) / 100 + " per kg other costs" : ""}</summary>
+    <details class="sd"><summary>Assumptions: ${num(st.waste)}% wastage, ${num(st.cut)}% below the cheapest of Local and App${exTot > 0 ? ", ₹" + Math.round(exTot * 100) / 100 + " per kg other costs" : ""}</summary>
       <div class="fg">
         <label>Extra bought for wastage (%)<input type="number" inputmode="decimal" min="0" value=${st.waste} onInput=${setG("waste")} /></label>
-        <label>Sell below the cheapest rival by (%)<input type="number" inputmode="decimal" min="0" value=${st.cut} onInput=${setG("cut")} /></label>
+        <label>Sell below the cheapest of Local and App by (%)<input type="number" inputmode="decimal" min="0" value=${st.cut} onInput=${setG("cut")} /></label>
       </div>
       <p style=${{ margin: "10px 0 2px" }}><b>Other costs, ₹ per kg</b></p>
       <p class="note" style=${{ margin: "0 0 6px" }}>Work out each as a per-kg figure: for example ₹300 of transport for 500 kg is ₹0.6 per kg. For delivery, divide the cost of a trip by the kg it carries. Items sold per dozen or per pack use their kg per unit from the Catalogue.</p>
@@ -1911,10 +1917,10 @@ function PriceCheck() {
       </div>
     </div>
     ${list.length === 0 && h`<p class="note">${view === "done" ? "Nothing checked yet. An item counts as checked once it has an APMC (Buy) price and a Local or App price. Fill those in the Catalogue, or open Not checked and type them here." : "No items match."}</p>`}
-    <ul>${list.map(x => h`<li key=${x.i.id} class="ci cx">
+    <ul>${list.map(x => h`<li key=${x.i.id} class="ci cx cx4">
       <div class="cxn" style=${{ cursor: "default" }}><span aria-hidden="true">${x.i.e}</span><b>${x.i.n} <small>per ${x.i.u}</small></b></div>
-      ${field(x, "apmc", "APMC ₹", +x.i.cost)}${field(x, "local", "Local ₹", +x.i.mrp)}${field(x, "app", "App ₹", 0)}
-      ${x.done && h`<div class=${"cxs r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")} style=${{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span>Sell at ${inr(x.sell)} · cost ${inr(Math.round(x.landed * 10) / 10)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</span>${+x.i.p === x.sell && (!(x.l > 0) || +x.i.mrp === x.l) && (!(x.a > 0) || +x.i.cost === x.a) ? h`<span class="chip st-ok">Saved in Catalogue</span>` : h`<button class="ghost" style=${{ padding: "4px 10px" }} onClick=${() => useSell(x.i, x.sell, x.a, x.l)}>Use ₹${x.sell}${x.l > 0 && +x.i.mrp !== x.l ? " + local ₹" + x.l : ""}</button>`}</div>`}
+      ${field(x, "apmc", "APMC ₹", +x.i.cost)}${field(x, "local", "Local ₹", +x.i.mrp)}${field(x, "app", "App ₹", 0)}<label><small>Your App ₹</small><input type="number" inputmode="decimal" min="0" aria-label=${x.i.n + " your app price"} placeholder="0" value=${+x.i.p > 0 ? x.i.p : ""} onInput=${e => setOwn(x.i, e.target.value)} /></label>
+      ${x.done && h`<div class=${"cxs r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")} style=${{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span>Sell at ${inr(x.sell)} · cost ${inr(Math.round(x.landed * 10) / 10)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</span>${+x.i.p > 0 && h`<span>Your App ₹${x.i.p} → margin ${((x.i.p - x.landed) / x.i.p * 100).toFixed(0)}%</span>`}${+x.i.p === x.sell && (!(x.l > 0) || +x.i.mrp === x.l) && (!(x.a > 0) || +x.i.cost === x.a) ? h`<span class="chip st-ok">Saved in Catalogue</span>` : h`<button class="ghost" style=${{ padding: "4px 10px" }} onClick=${() => useSell(x.i, x.sell, x.a, x.l)}>Use ₹${x.sell}${x.l > 0 && +x.i.mrp !== x.l ? " + local ₹" + x.l : ""}</button>`}</div>`}
     </li>`)}</ul>
     <p class="note" style=${{ marginTop: 12 }}>Suggested sell price = the cheaper of the local seller and the app, minus your discount. Margin is after your wastage allowance and the other costs you entered under Assumptions (cost shown is the full landed cost per unit). Check the same quality and the same pack size on each platform.</p>
     <button class="lk" onClick=${reset}>Clear all prices</button>
