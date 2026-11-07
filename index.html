@@ -1851,7 +1851,7 @@ function PriceCheck() {
     if (!(a > 0 && alts.length)) return { i, r, done: false };
     const sell = Math.round(Math.min(...alts) * (1 - num(st.cut) / 100));
     const margin = (sell - a * (1 + num(st.waste) / 100)) / sell * 100;
-    return { i, r, done: true, sell, margin, gap: p > 0 ? (p - a) / p * 100 : null };
+    return { i, r, done: true, sell, margin, a, l, gap: p > 0 ? (p - a) / p * 100 : null };
   });
   const done = rows.filter(x => x.done);
   const gaps = done.filter(x => x.gap !== null);
@@ -1870,8 +1870,8 @@ function PriceCheck() {
   const [fv, setFv] = useState(null);
   const [, bump] = useState(0);
   const view = fv || (done.length ? "done" : "todo");
-  const useSell = (it, sell) => {
-    ITEMS = ITEMS.map(x => x.id === it.id ? { ...x, p: sell } : x);
+  const useSell = (it, sell, a, l) => {
+    ITEMS = ITEMS.map(x => x.id === it.id ? { ...x, p: sell, ...(l > 0 ? { mrp: l } : {}), ...(a > 0 ? { cost: a } : {}) } : x);
     try { localStorage.setItem(CK, JSON.stringify(ITEMS.map(normItem))); } catch (e) {}
     bump(n => n + 1);
   };
@@ -1906,7 +1906,7 @@ function PriceCheck() {
     <ul>${list.map(x => h`<li key=${x.i.id} class="ci cx">
       <div class="cxn" style=${{ cursor: "default" }}><span aria-hidden="true">${x.i.e}</span><b>${x.i.n} <small>per ${x.i.u}</small></b></div>
       ${field(x, "apmc", "APMC ₹", +x.i.cost)}${field(x, "local", "Local ₹", +x.i.mrp)}${field(x, "app", "App ₹", 0)}
-      ${x.done && h`<div class=${"cxs r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")} style=${{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span>Sell at ${inr(x.sell)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</span>${+x.i.p === x.sell ? h`<span class="chip st-ok">Your ₹ is set</span>` : h`<button class="ghost" style=${{ padding: "4px 10px" }} onClick=${() => useSell(x.i, x.sell)}>Use ₹${x.sell}</button>`}</div>`}
+      ${x.done && h`<div class=${"cxs r " + (x.margin >= 15 ? "good" : x.margin >= 8 ? "mid" : "bad")} style=${{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span>Sell at ${inr(x.sell)} · margin ${x.margin.toFixed(0)}%${x.margin >= 15 ? " · worth selling" : x.margin >= 8 ? " · thin" : " · skip or raise price"}</span>${+x.i.p === x.sell && (!(x.l > 0) || +x.i.mrp === x.l) && (!(x.a > 0) || +x.i.cost === x.a) ? h`<span class="chip st-ok">Saved in Catalogue</span>` : h`<button class="ghost" style=${{ padding: "4px 10px" }} onClick=${() => useSell(x.i, x.sell, x.a, x.l)}>Use ₹${x.sell}${x.l > 0 && +x.i.mrp !== x.l ? " + local ₹" + x.l : ""}</button>`}</div>`}
     </li>`)}</ul>
     <p class="note" style=${{ marginTop: 12 }}>Suggested sell price = the cheaper of the local seller and the app, minus your discount. Margin is after your wastage allowance and does not include delivery, packing or labour. Check the same quality and the same pack size on each platform.</p>
     <button class="lk" onClick=${reset}>Clear all prices</button>
