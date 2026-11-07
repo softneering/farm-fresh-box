@@ -254,6 +254,8 @@ p.err,.oc p.err{color:#b71c1c;margin:6px 0 12px;font-size:15px;letter-spacing:no
 .grpcard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:12px;margin:0 0 12px;cursor:pointer}
 .grpcard>span:first-child{font-size:26px}.grpcard>span:nth-child(2){flex:1;min-width:0}.grpcard b{display:block}.grpcard small{display:block;color:var(--mut);font-weight:400;font-size:13px;margin-top:2px}.grpcard i{font-style:normal;font-size:22px;color:var(--mut)}
 .grpbox{margin:0 0 12px}
+.savebar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 0 12px;margin-top:14px;z-index:5}
+.tab .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cta);margin-left:6px;vertical-align:middle}
 .bsum{margin:8px 0;font-size:14px;color:var(--mut)}
 .bsum>div{display:flex;justify-content:space-between;padding:2px 0}
 .spk{margin:10px 0}.spk .pgs{max-height:240px;overflow:auto}
@@ -2468,6 +2470,7 @@ function SettingsAdmin() {
   const [gin, setGin] = useState(CFG.gstin || "");
   const [gIncl, setGIncl] = useState(CFG.gstIncl !== false);
   const [gFee, setGFee] = useState(String(CFG.gstFee || 0));
+  const [st, setSt] = useState("orders");
   const [gpOn, setGpOn] = useState(CFG.groupOn !== false);
   const [gpMin, setGpMin] = useState(String(CFG.groupMin));
   const [rates, setRates] = useState([...GST_RATES]);
@@ -2503,8 +2506,15 @@ function SettingsAdmin() {
     setMsg("Saved. Customers see the new line on the Home page.");
   };
   const reset = () => { setMin(String(SET_DEFAULT.min)); setClose(SET_DEFAULT.close); setDelivery(SET_DEFAULT.delivery); setFee(String(SET_DEFAULT.fee)); setFree(String(SET_DEFAULT.freeAbove)); setMt(String(SET_DEFAULT.maxTries)); setPay(String(SET_DEFAULT.pay)); setGpOn(true); setGpMin(String(SET_DEFAULT.groupMin)); setGOn(false); setGin(""); setGIncl(true); setGFee("0"); setRates([0, 5, 12, 18]); setBn(DEFAULT_BANNERS.map(b => ({ ...b }))); setTag(DEFAULT_TAGLINE); setOff([]); apply({ ...SET_DEFAULT }); setMsg("Back to the defaults."); };
+  const dOrders = min !== String(CFG.min) || fee !== String(CFG.fee) || free !== String(CFG.freeAbove) || mt !== String(CFG.maxTries) || pay !== String(CFG.pay) || close !== CFG.close || delivery !== CFG.delivery;
+  const dHome = tag !== (CFG.tagline || "") || JSON.stringify(bn) !== JSON.stringify(CFG.banners || []) || JSON.stringify([...off].sort()) !== JSON.stringify([...OFF_CATS].sort());
+  const dGroups = gpOn !== (CFG.groupOn !== false) || gpMin !== String(CFG.groupMin);
+  const dGst = gOn !== !!CFG.gstOn || gin !== (CFG.gstin || "") || gIncl !== (CFG.gstIncl !== false) || gFee !== String(CFG.gstFee || 0) || JSON.stringify(rates) !== JSON.stringify(GST_RATES);
+  const TABS = [["orders", "Orders", dOrders], ["home", "Home", dHome], ["groups", "Groups", dGroups], ["gst", "GST", dGst]];
   return h`<div class="wrap adm">
-    <header><h1>Settings</h1><p class="sub">Minimum order, delivery fee and the line customers see on Home.</p></header>
+    <header><h1>Settings</h1><p class="sub">Orders, delivery, Home page, groups and GST. One Save button covers every tab.</p></header>
+    <div class="tabs" role="group" aria-label="Settings sections">${TABS.map(([k, l, d]) => h`<button key=${k} class="tab" aria-pressed=${st === k} onClick=${() => setSt(k)}>${l}${d ? h`<i class="dot" aria-label="Unsaved changes"></i>` : ""}</button>`)}</div>
+    ${st === "orders" && h`<div>
     <label>Minimum order (₹)<input type="number" inputMode="numeric" min="0" value=${min} onInput=${e => { setMin(e.target.value); setMsg(""); }} /></label>
     <label>Delivery fee (₹)<input type="number" inputMode="numeric" min="0" value=${fee} onInput=${e => { setFee(e.target.value); setMsg(""); }} /></label>
     <label>Pay per delivery to employees (₹)<input type="number" inputMode="numeric" min="0" value=${pay} onInput=${e => { setPay(e.target.value); setMsg(""); }} /></label>
@@ -2512,40 +2522,6 @@ function SettingsAdmin() {
     <label>Free delivery on orders of (₹) or more<input type="number" inputMode="numeric" min="0" value=${free} onInput=${e => { setFree(e.target.value); setMsg(""); }} /></label>
     <label>Wrong delivery-code attempts allowed<input type="number" inputMode="numeric" min="1" max="50" value=${mt} onInput=${e => { setMt(e.target.value); setMsg(""); }} /></label>
     <p class="note">After this many wrong codes on one order, the employee is locked out of that order for 5 minutes.</p>
-    <h2 style=${{ margin: "14px 0 4px" }}>Categories</h2>
-    <p class="note">Tick the categories customers can see. Unticked ones disappear from Home, Category, search, deals and the family box. Items stay in your catalogue.</p>
-    <div class="pgs">${CATS.map((c, i) => h`<label key=${c} class="pk2"><input type="checkbox" checked=${!off.includes(i)} onChange=${e => { setOff(e.target.checked ? off.filter(x => x !== i) : [...off, i]); setMsg(""); }} /><span><b>${CAT_E[i] || "🛒"} ${c}</b><small>${ITEMS.filter(x => +x.c === i).length} items · ${off.includes(i) ? "Hidden from customers" : "Shown to customers"}</small></span></label>`)}</div>
-    ${off.length >= CATS.length && h`<p class="warn">At least one category must stay on.</p>`}
-    <h2 style=${{ margin: "14px 0 4px" }}>Group ordering</h2>
-    <label class="pk2"><input type="checkbox" checked=${gpOn} onChange=${e => { setGpOn(e.target.checked); setMsg(""); }} /><span><b>Let customers order in groups</b><small>Neighbours join a group by link, each places their own order, and the delivery fee is shared. Turning this off hides groups from customers; existing groups are kept.</small></span></label>
-    ${gpOn && h`<label>Minimum order for each member in a group (₹)<input type="number" inputMode="numeric" min="0" value=${gpMin} onChange=${e => { setGpMin(e.target.value); setMsg(""); }} onInput=${e => { setGpMin(e.target.value); setMsg(""); }} /></label>`}
-    ${gpOn && h`<p class="note">Group members can order less than the normal minimum (₹${CFG.min}). Delivery is free for everyone once the group's total reaches ₹${CFG.freeAbove}.</p>`}
-    <h2 style=${{ margin: "14px 0 4px" }}>GST</h2>
-    <label class="pk2"><input type="checkbox" checked=${gOn} onChange=${e => { setGOn(e.target.checked); setMsg(""); }} /><span><b>Charge GST on bills</b><small>Keep this off until your CA confirms you are registered and which rates apply. Set each item's GST % and HSN in Catalogue.</small></span></label>
-    ${gOn && h`<div>
-      <label>Your GSTIN<input maxLength="15" value=${gin} onInput=${e => { setGin(e.target.value.toUpperCase()); setMsg(""); }} placeholder="27ABCDE1234F1Z5" /></label>
-      ${gin.trim() !== "" && bad && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gin.trim()) && h`<p class="warn">A GSTIN has 15 characters, like 27ABCDE1234F1Z5.</p>`}
-      <label class="pk2"><input type="checkbox" checked=${gIncl} onChange=${e => { setGIncl(e.target.checked); setMsg(""); }} /><span><b>Prices already include GST</b><small>${gIncl ? "Customers pay the listed price. The bill shows how much GST is inside it." : "GST is added on top of the listed price at checkout."}</small></span></label>
-      <label>GST on delivery fee<select value=${gFee} onChange=${e => { setGFee(e.target.value); setMsg(""); }}>${rates.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></label>
-      <p class="note">Delivery fee GST depends on your CA's advice. Without a GSTIN, the customer bill is called "Bill", not "Tax invoice".</p>
-    </div>`}
-    <h2 style=${{ margin: "14px 0 4px" }}>GST rate list</h2>
-    <p class="note">The rates you can pick for items in Catalogue and for the delivery fee. Add a rate, or remove one that no item uses. 0% always stays.</p>
-    <div class="chips">${rates.map(r => h`<span key=${r} class="chip" style=${{ display: "inline-flex", alignItems: "center", gap: 6 }}>${r}%${r !== 0 && usedBy(r) === 0 && +gFee !== r ? h`<button class="lk" aria-label=${"Remove " + r + "%"} onClick=${() => dropRate(r)}>×</button>` : r !== 0 ? h`<small>${usedBy(r)} item${usedBy(r) === 1 ? "" : "s"}</small>` : ""}</span>`)}</div>
-    <div style=${{ display: "flex", gap: 8, margin: "8px 0" }}><input type="number" inputMode="decimal" min="0" max="100" step="0.1" placeholder="e.g. 28" aria-label="New GST rate" value=${nr} onInput=${e => setNr(e.target.value)} /><button class="ghost" onClick=${addRate}>Add rate</button></div>
-    <h2 style=${{ margin: "14px 0 4px" }}>Tag line</h2>
-    <label>Shown under the app name on the login and Home pages<input maxLength="80" value=${tag} onInput=${e => { setTag(e.target.value); setMsg(""); }} placeholder=${DEFAULT_TAGLINE} /></label>
-    <p class="note">Leave it empty to hide the tag line. ${tag.trim() && h`Preview: <b>${tag.trim()}</b>`}</p>
-    <h2 style=${{ margin: "14px 0 4px" }}>Home banners</h2>
-    <p class="note">Short messages customers swipe through at the top of Home. You can use these placeholders and they fill in automatically: <b>{savePct}</b> saving vs local prices, <b>{local1000}</b> what a ₹1,000 basket costs locally, <b>{min}</b>, <b>{free}</b>, <b>{fee}</b>, <b>{close}</b>, <b>{delivery}</b>.</p>
-    ${bn.map((b, k) => h`<div key=${k} class="oc" style=${{ margin: "0 0 8px" }}>
-      <label class="pk2" style=${{ margin: 0 }}><input type="checkbox" checked=${b.on} onChange=${e => setB(k, { on: e.target.checked })} /><span><b>Banner ${k + 1}</b><small>${b.on ? "Shown to customers" : "Hidden"}</small></span></label>
-      <label>Headline<input maxLength="80" value=${b.title} onInput=${e => setB(k, { title: e.target.value })} /></label>
-      <label>Supporting line<input maxLength="200" value=${b.text} onInput=${e => setB(k, { text: e.target.value })} /></label>
-      <button class="lk" onClick=${() => { setBn(bn.filter((_, j) => j !== k)); setMsg(""); }}>Remove</button>
-    </div>`)}
-    ${bn.length < 8 && h`<button class="ghost" onClick=${() => { setBn([...bn, { on: true, title: "", text: "" }]); setMsg(""); }}>+ Add a banner</button>`}
-    ${bn.some(b => b.on && b.title.trim()) && h`<p class="note">Preview:</p><${Carousel} items=${bn} auto=${false} />`}
     <label>Orders placed by<input value=${close} onInput=${e => { setClose(e.target.value); setMsg(""); }} placeholder="Thursday 9 PM" /></label>
     <label>Delivery<input value=${delivery} onInput=${e => { setDelivery(e.target.value); setMsg(""); }} placeholder="Saturday morning" /></label>
     ${bad && h`<p class="warn">Enter amounts of 0 or more (fee and pay up to ₹5,000), attempts from 1 to 50, and fill both lines.</p>`}
@@ -2559,11 +2535,55 @@ function SettingsAdmin() {
     <p class="note">What customers will see:</p>
     <div class="banner"><span>🕘</span><span>Orders placed by <b>${close || "…"}</b>. Delivery <b>${delivery || "…"}</b>. Minimum order <b>₹${bad ? "…" : m}</b>.</span></div>
     ${!bad && h`<p class="note">In the cart: delivery is <b>₹${fv}</b> for orders below ₹${gv}, and <b>free</b> for orders of ₹${gv} or more.</p>`}
-    <div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-      <button class="cta" disabled=${bad} onClick=${save}>Save</button>
-      <button class="ghost" onClick=${reset}>Reset to defaults</button>
+    </div>`}
+    ${st === "home" && h`<div>
+    <h2 style=${{ margin: "4px 0 4px" }}>Tag line</h2>
+    <label>Shown under the app name on the login and Home pages<input maxLength="80" value=${tag} onInput=${e => { setTag(e.target.value); setMsg(""); }} placeholder=${DEFAULT_TAGLINE} /></label>
+    <p class="note">Leave it empty to hide the tag line. ${tag.trim() && h`Preview: <b>${tag.trim()}</b>`}</p>
+    <h2 style=${{ margin: "14px 0 4px" }}>Home banners</h2>
+    <p class="note">Short messages customers swipe through at the top of Home. You can use these placeholders and they fill in automatically: <b>{savePct}</b> saving vs local prices, <b>{local1000}</b> what a ₹1,000 basket costs locally, <b>{min}</b>, <b>{free}</b>, <b>{fee}</b>, <b>{close}</b>, <b>{delivery}</b>.</p>
+    ${bn.map((b, k) => h`<div key=${k} class="oc" style=${{ margin: "0 0 8px" }}>
+      <label class="pk2" style=${{ margin: 0 }}><input type="checkbox" checked=${b.on} onChange=${e => setB(k, { on: e.target.checked })} /><span><b>Banner ${k + 1}</b><small>${b.on ? "Shown to customers" : "Hidden"}</small></span></label>
+      <label>Headline<input maxLength="80" value=${b.title} onInput=${e => setB(k, { title: e.target.value })} /></label>
+      <label>Supporting line<input maxLength="200" value=${b.text} onInput=${e => setB(k, { text: e.target.value })} /></label>
+      <button class="lk" onClick=${() => { setBn(bn.filter((_, j) => j !== k)); setMsg(""); }}>Remove</button>
+    </div>`)}
+    ${bn.length < 8 && h`<button class="ghost" onClick=${() => { setBn([...bn, { on: true, title: "", text: "" }]); setMsg(""); }}>+ Add a banner</button>`}
+    ${bn.some(b => b.on && b.title.trim()) && h`<p class="note">Preview:</p><${Carousel} items=${bn} auto=${false} />`}
+    <h2 style=${{ margin: "14px 0 4px" }}>Categories</h2>
+    <p class="note">Tick the categories customers can see. Unticked ones disappear from Home, Category, search, deals and the family box. Items stay in your catalogue.</p>
+    <div class="pgs">${CATS.map((c, i) => h`<label key=${c} class="pk2"><input type="checkbox" checked=${!off.includes(i)} onChange=${e => { setOff(e.target.checked ? off.filter(x => x !== i) : [...off, i]); setMsg(""); }} /><span><b>${CAT_E[i] || "🛒"} ${c}</b><small>${ITEMS.filter(x => +x.c === i).length} items · ${off.includes(i) ? "Hidden from customers" : "Shown to customers"}</small></span></label>`)}</div>
+    ${off.length >= CATS.length && h`<p class="warn">At least one category must stay on.</p>`}
+    </div>`}
+    ${st === "groups" && h`<div>
+    <h2 style=${{ margin: "4px 0 4px" }}>Group ordering</h2>
+    <label class="pk2"><input type="checkbox" checked=${gpOn} onChange=${e => { setGpOn(e.target.checked); setMsg(""); }} /><span><b>Let customers order in groups</b><small>Neighbours join a group by link, each places their own order, and the delivery fee is shared. Turning this off hides groups from customers; existing groups are kept.</small></span></label>
+    ${gpOn && h`<label>Minimum order for each member in a group (₹)<input type="number" inputMode="numeric" min="0" value=${gpMin} onChange=${e => { setGpMin(e.target.value); setMsg(""); }} onInput=${e => { setGpMin(e.target.value); setMsg(""); }} /></label>`}
+    ${gpOn && h`<p class="note">Group members can order less than the normal minimum (₹${CFG.min}). Delivery is free for everyone once the group's total reaches ₹${CFG.freeAbove}.</p>`}
+    </div>`}
+    ${st === "gst" && h`<div>
+    <h2 style=${{ margin: "4px 0 4px" }}>GST</h2>
+    <label class="pk2"><input type="checkbox" checked=${gOn} onChange=${e => { setGOn(e.target.checked); setMsg(""); }} /><span><b>Charge GST on bills</b><small>Keep this off until your CA confirms you are registered and which rates apply. Set each item's GST % and HSN in Catalogue.</small></span></label>
+    ${gOn && h`<div>
+      <label>Your GSTIN<input maxLength="15" value=${gin} onInput=${e => { setGin(e.target.value.toUpperCase()); setMsg(""); }} placeholder="27ABCDE1234F1Z5" /></label>
+      ${gin.trim() !== "" && bad && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gin.trim()) && h`<p class="warn">A GSTIN has 15 characters, like 27ABCDE1234F1Z5.</p>`}
+      <label class="pk2"><input type="checkbox" checked=${gIncl} onChange=${e => { setGIncl(e.target.checked); setMsg(""); }} /><span><b>Prices already include GST</b><small>${gIncl ? "Customers pay the listed price. The bill shows how much GST is inside it." : "GST is added on top of the listed price at checkout."}</small></span></label>
+      <label>GST on delivery fee<select value=${gFee} onChange=${e => { setGFee(e.target.value); setMsg(""); }}>${rates.map(r => h`<option key=${r} value=${r}>${r}%</option>`)}</select></label>
+      <p class="note">Delivery fee GST depends on your CA's advice. Without a GSTIN, the customer bill is called "Bill", not "Tax invoice".</p>
+    </div>`}
+    <h2 style=${{ margin: "14px 0 4px" }}>GST rate list</h2>
+    <p class="note">The rates you can pick for items in Catalogue and for the delivery fee. Add a rate, or remove one that no item uses. 0% always stays.</p>
+    <div class="chips">${rates.map(r => h`<span key=${r} class="chip" style=${{ display: "inline-flex", alignItems: "center", gap: 6 }}>${r}%${r !== 0 && usedBy(r) === 0 && +gFee !== r ? h`<button class="lk" aria-label=${"Remove " + r + "%"} onClick=${() => dropRate(r)}>×</button>` : r !== 0 ? h`<small>${usedBy(r)} item${usedBy(r) === 1 ? "" : "s"}</small>` : ""}</span>`)}</div>
+    <div style=${{ display: "flex", gap: 8, margin: "8px 0" }}><input type="number" inputMode="decimal" min="0" max="100" step="0.1" placeholder="e.g. 28" aria-label="New GST rate" value=${nr} onInput=${e => setNr(e.target.value)} /><button class="ghost" onClick=${addRate}>Add rate</button></div>
+    </div>`}
+    <div class="savebar">
+      ${bad && h`<p class="warn" style=${{ margin: "0 0 6px" }}>Some values need fixing (check the tabs). Amounts must be 0 or more, attempts 1 to 50, and a GSTIN must have 15 characters.</p>`}
+      <div style=${{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <button class="cta" disabled=${bad} onClick=${save}>Save</button>
+        <button class="ghost" onClick=${reset}>Reset to defaults</button>
+        ${msg && h`<span class="note good" role="status" style=${{ margin: 0 }}>${msg}</span>`}
+      </div>
     </div>
-    ${msg && h`<p class="note good" role="status">${msg}</p>`}
     <p class="note" style=${{ marginTop: 12 }}>A society can have its own delivery slot and minimum when you add it in the Societies tab. If it does not, these apply. Saved in this browser for now, so other phones will pick it up once the backend is connected.</p>
   </div>`;
 }
